@@ -1,0 +1,7 @@
+Relé: Omron G3MB-202P
+Pracovní napětí: 5VDC (20-40mA)
+Rozměry: 25x35x25mm
+Váha: 21.5g
+Trigger:
+0-2.5V Low Level
+3.3-5V High Level

@@ -1,0 +1,8 @@
+Program started 16:4:4 2022-5-30 1.22
+Stable at: 54.0lx
+Fade time 1: 0s
+Hold time 1: 9s at value: 54.0lx
+Fade time 2: 13s
+Hold time 2: 14s at value: 48.0lx at 88.9%
+Fade time 3: 7s
+Hold time 3: 7s at value: 42.0lx at 77.8%
