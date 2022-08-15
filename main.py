@@ -9,7 +9,7 @@ from ssd1306 import SSD1306_I2C
 from utime import sleep
 from BH1750 import BH1750
 from neopixel import Neopixel
-import DS1307, _thread
+import DS1307, _thread, micropython
 
 # I2C variables
 id = 0
@@ -31,7 +31,7 @@ oled = SSD1306_I2C(width=width, height=height, i2c=i2c)
 oled.init_display()
 
 # Setup the Rotary Encoder - OK - UP - DOWN
-button_OK = Pin(20, Pin.IN, Pin.PULL_DOWN)
+button_ok = Pin(20, Pin.IN, Pin.PULL_DOWN)
 button_up = Pin(19, Pin.IN, Pin.PULL_DOWN)
 button_do  = Pin(18, Pin.IN, Pin.PULL_DOWN)
 
@@ -149,7 +149,7 @@ while True:
                 show_menu(file_list)
 
     # Check for button pressed
-    if button_OK.value() == True:
+    if button_ok.value() == True:
 
         print("Launching", file_list[highlight-1+shift]) 
 

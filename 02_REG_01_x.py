@@ -6,22 +6,24 @@ from BH1750 import BH1750
 from neopixel import Neopixel
 import DS1307, _thread, micropython
 
-version = "1.27 TREVOS"
+version = "1.27 TREVOS - still testing"
+
 """
 LUX CORRIDOR meter
 
-The relay waits until it gets stable reading of OFF luminaire. And then start the cycle of measurement and datawrite.
+The relay waits until it gets stable reading of OFF luminaire. And then start the cycle of measurement and data-write phase.
 
 ZKONTROLOVAT - freeze u třetí části
 
-zapisovat si postupne vysledky a nakonec je z listu vypsat, na samostatne lajny..
-
-pridat DEBUG variable to show or hide all extra debug data 
+add DEBUG variable to show or hide all extra debug data 
 
 SROVNAT FAD1 detekci presnejsiho casu 
 
+Přidat po konecnem vysledku cekani s OK ci NOK a po potvrzeni se vratit do hlavniho menu.
+
 Val0 vyhodnotit nakonec kdyz se nejaka hodnota bude rovnat pocatecni Val0 tak je KONEC
 """
+DEBUG = False #If TRUE, program shows extra data
 
 FADE1 = 0.7 #can't be really measured - compared if there is ~3 sec difference? (to adjust to the start up of the driver)
 HOLD1 = 120 #120
@@ -43,7 +45,7 @@ update_time = 0.1
 
 #program_end = False
 program_result = "nevyhodnocen/program ukončen předčasně"
-OK = False   # PROGRAM final verdict
+OK = False   # PROGRAM final verdict | False = NOK
 
 i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
 
@@ -66,7 +68,7 @@ n_leds = 1
 pixels = Neopixel(n_leds, 0, 28, "GRB")
 
 # buttons
-button = Pin(20, Pin.IN, Pin.PULL_DOWN)
+button_ok = Pin(20, Pin.IN, Pin.PULL_DOWN)
 button_up = Pin(19, Pin.IN, Pin.PULL_DOWN)
 button_down = Pin(18, Pin.IN, Pin.PULL_DOWN)
 
@@ -89,7 +91,8 @@ if INFINITE == True:
     trvani_s_rezervou = (5 + FADE1 + HOLD1 + FADE2 + HOLD2 + FADE3 + HOLD3) * 1.15
 else:
     trvani_s_rezervou = (5 + FADE1 + HOLD1 + FADE2 + HOLD2 + FADE3 + HOLD3) * 1.08
-print(trvani_s_rezervou)
+if DEBUG == True:
+    print(f"{trvani_s_rezervou} trvani_s_rezervou")
 
 def format_seconds_to_hhmmss(seconds):
     hours = seconds // (60*60)
@@ -117,7 +120,7 @@ def button_reader_thread():
     global button_pressed
 
     while True:
-        if button.value() == 1:
+        if button_ok.value() == 1:
             button_pressed = True
         sleep(0.05)
 
@@ -241,7 +244,8 @@ while button_pressed == False:
 
 
     lux = light.luminance(BH1750.CONT_HIRES_1)
-    print(lux)
+    if DEBUG == True:
+        print(f"{lux} lux")
     lux = round(lux, 0)
     lux = str(round(lux, 1))  # round to whole numbers
     oled.fill(0)
@@ -279,8 +283,9 @@ while button_pressed == False:
 
     if len(lux_value) > 5:
         lux_value.pop()
-    #     print(lux_list)
-    #     print(lux_value)
+        if DEBUG == True:
+            print(f"{lux_list} lux_list")
+            print(f"{lux_value} lux_value")
     stable = all(i for i in lux_value)
 
 # OPERATIVE phase
@@ -330,7 +335,7 @@ while button_pressed == False:
         else:
             file.write("NOK")
             OK = False
-        file.write(" - Hold time 1: " + str(Hol1) + "s at value: " + str(Val1) + "lx\n")
+        file.write(" - Hold time 1: " + str(Hol1) + "s at value: " + str(Val1) + "lx (100%)\n")
         file.flush()
 
     if Tim1 != "x" and Tim2 != "x" and Tim3 == "x" and stable == True:
@@ -414,10 +419,12 @@ while button_pressed == False:
     #AUTOMATIC END if measuring too long TIME+10%
     cas_bezi = float(get_seconds())
     cas_celeho_testu = float(trvani_s_rezervou) * 1.0
-    print(f"{cas_bezi}/{cas_celeho_testu}")
+    if DEBUG == True:
+        print(f"{cas_bezi}/{cas_celeho_testu}")
     if cas_bezi >= cas_celeho_testu:
-        print(Per1)
-        print(Per2)
+        if DEBUG == True:
+            print(Per1)
+            print(Per2)
 #        file.write("Program dlouhý a ukončen po definovaných časech +10%" + "\n")
         if INFINITE == True:
             if Per2 == "x" or Per2 > 1:
@@ -440,8 +447,9 @@ while button_pressed == False:
     #     print(f"{Val3} lux ({Per2}%) standby phase2 - Val3")
     #     print(f"{Tim6} s - standby phase2 - END - Tim6")
     #     print(f"{Val4} lux standby phase2 - END Val4")
-    #         print(f"{percent_one}% of fade")
-    micropython.mem_info()
+    #     print(f"{percent_one}% of fade")
+    if DEBUG == True:
+        micropython.mem_info()
     sleep(update_time)
 
 """Result comparison"""
@@ -463,23 +471,22 @@ file.write("\n" + "Result:" + program_result + "\n")
 
 relay.value(1)
 LED.value(0)
-
-
-"""OK or NOK - to be finished / LOOP skipped on button click?? """
-# sets MOOD LED to NOK or OK
-if OK == True:
-    pixels.fill((0, 80, 0))
-    pixels.show()
-    sleep(2)
-else:
-    pixels.fill((80, 0, 0))
-    pixels.show()
-    sleep(2)
-
 file.close()
 
+# sets MOOD LED to NOK or OK
 # WAIT phase for button click before jumping back to the menu
+while True:
+    if button_ok.value() == 1:
+        break
+    if OK == True:
+        pixels.fill((0, 80, 0))
+        pixels.show()
+    else:
+        pixels.fill((80, 0, 0))
+        pixels.show()
+    sleep(0.1)
 
 # re-sets MOOD LED to END
 pixels.fill((0, 0, 0))
 pixels.show()
+sleep(0.75)
