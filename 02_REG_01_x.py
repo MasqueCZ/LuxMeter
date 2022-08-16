@@ -13,39 +13,42 @@ LUX CORRIDOR meter
 
 The relay waits until it gets stable reading of OFF luminaire. And then start the cycle of measurement and data-write phase.
 
-ZKONTROLOVAT - freeze u třetí části
+------------------------------------------
 
-add DEBUG variable to show or hide all extra debug data 
+pridat kontrolu, jak jednou padne NOK, tak nemuze byt mereni OK !!
+
+ZKONTROLOVAT - freeze u třetí části
 
 SROVNAT FAD1 detekci presnejsiho casu 
 
-Přidat po konecnem vysledku cekani s OK ci NOK a po potvrzeni se vratit do hlavniho menu.
-
 Val0 vyhodnotit nakonec kdyz se nejaka hodnota bude rovnat pocatecni Val0 tak je KONEC
+
+
 """
-DEBUG = False #If TRUE, program shows extra data
+DEBUG = False #If TRUE, program shows extra data in shell
 
 FADE1 = 0.7 #can't be really measured - compared if there is ~3 sec difference? (to adjust to the start up of the driver)
-HOLD1 = 120 #120
+HOLD1 = 60 #120
 LEVEL1 = 100 #can't be checked - kinda useless here, but important for clearer reading of variables
 FADE2 = 32 #32
-HOLD2 = 602 #602 even when the CORRIDOR won't stop it needs time to know how long to measure
-LEVEL2 = 10 #10%
-FADE3 = 0
-HOLD3 = 0
-LEVEL3 = 0
-INFINITE = True # if TRUE > HOLD2 INDEFINITELY or HOLD3 INDEFINITELY | FALSE if exact
+HOLD2 = 60 #602 even when the CORRIDOR won't stop it needs time to know how long to measure
+LEVEL2 = 25 #10%
+FADE3 = 8 #8s
+HOLD3 = 30 #30s
+LEVEL3 = 10 #10%
+INFINITE = False # if TRUE > HOLD2 INDEFINITELY or HOLD3 INDEFINITELY | FALSE if exact
 
-TOLERANCE = 0.10 #tolerance porovnani dat 5%
+TOLERANCE = 0.10 #tolerance porovnani dat 10%
 TOL_LUX = 0.02 #tolerance zmeny hodnoty v namerenych lumenech
 cas_bezi = 0
 
 # display update and read data time 0.1 works well for now
-update_time = 0.1
+update_time = 0.42
+pix_val = 0.5 # variable for PIXELS value
 
 #program_end = False
 program_result = "nevyhodnocen/program ukončen předčasně"
-OK = False   # PROGRAM final verdict | False = NOK
+OK = True   # PROGRAM final verdict | False = NOK
 
 i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
 
@@ -77,7 +80,7 @@ LED = Pin(25, Pin.OUT)
 LED.value(0)
 
 # sets MOOD LED to READY
-pixels.fill((25, 10, 0))
+pixels.fill((25*pix_val, 10*pix_val, 0)) # ORANGE
 pixels.show()
 
 #enable oscillator
@@ -91,6 +94,7 @@ if INFINITE == True:
     trvani_s_rezervou = (5 + FADE1 + HOLD1 + FADE2 + HOLD2 + FADE3 + HOLD3) * 1.15
 else:
     trvani_s_rezervou = (5 + FADE1 + HOLD1 + FADE2 + HOLD2 + FADE3 + HOLD3) * 1.08
+
 if DEBUG == True:
     print(f"{trvani_s_rezervou} trvani_s_rezervou")
 
@@ -107,7 +111,8 @@ def get_time():
     time_list = ds.datetime()
     print(f"Time is {time_list[4]}:{time_list[5]}:{time_list[6]} {time_list[0]}-{time_list[1]}-{time_list[2]}")
 
-get_time()
+if DEBUG == True:
+    get_time()
 
 def get_seconds():
     allseconds = (counter_s + (counter_m * 60) + (counter_h * 60 * 60))
@@ -189,7 +194,7 @@ while button_pressed == False:
     sleep(0.18)
 
 # sets MOOD LED to MEASUREMENT STARTS
-pixels.fill((0, 0, 25))
+pixels.fill((0, 0, 15*pix_val)) # BLUE
 pixels.show()
 
 sleep(1)
@@ -204,14 +209,12 @@ file = open(test_file_name, "w")
 file.write(f"Program started {time_list[4]}:{time_list[5]}:{time_list[6]} {time_list[0]}-{time_list[1]}-{time_list[2]}" + "\n" + f"version: v{version}" + "\n")
 file.write("\n" + f"Parameters:" + "\n" + f"Fade {FADE1}s, Hold {HOLD1}s at {LEVEL1}%" + "\n")
 file.write(f"fade {FADE2}s, hold {HOLD2}s at {LEVEL2}%" + "\n")
-
-if FADE3 != 0:
-    file.write(f"fade {FADE3}s to {LEVEL3}%\n")
-else:
-    file.write(f"fade {FADE3}s, hold {HOLD3}s at {LEVEL3}%" + "\n")
+file.write(f"fade {FADE3}s, hold {HOLD3}s at {LEVEL3}%" + "\n")
 
 if INFINITE == True:
-    file.write(f"Driver nikdy nevypíná úplně do 0% a měří jen: {celkovy_cas_rezerva}" + "\n")
+    file.write(f"Driver nikdy nevypíná úplně do 0% ale měří jen: {celkovy_cas_rezerva}" + "\n")
+elif INFINITE == False:
+    file.write(f"Driver vypíná do 0% a měří: {celkovy_cas_rezerva}" + "\n")
 file.write("\n")
 file.flush()
 
@@ -225,6 +228,8 @@ sec_to_measure = time_actual[2]
 
 while button_pressed == False:
     LED.toggle()
+    pixels.fill((3*pix_val, 3*pix_val, 3*pix_val)) # WHITE
+    pixels.show()
 
     time_list = ds.datetime()
     time_actual = [time_list[4], time_list[5], time_list[6]]
@@ -390,11 +395,13 @@ while button_pressed == False:
         Fad3 = Tim5 - Tim4
         if float(FADE3) <= Fad3 + (Fad3 * TOLERANCE) and float(FADE3) >= Fad3 - (Fad3 * TOLERANCE):
             file.write("OK")
+        elif Fad3 <= (10 * FADE3):
+            file.write("OK-ish")
         else:
             file.write("NOK")
             OK = False
         file.write("- fade time 3: " + str(Fad3) + "s\n")
-        if float(LEVEL3) <= Per2 + (Per2 * TOLERANCE) and float(LEVEL3) <= Per2 - (Per2 * TOLERANCE):
+        if float(LEVEL3) <= Per2 + (Per2 * TOLERANCE) and float(LEVEL3) >= Per2 - (Per2 * TOLERANCE):
             file.write("OK")
         else:
             file.write("NOK")
@@ -407,7 +414,7 @@ while button_pressed == False:
         Val4 = lux
         phase2 = "Tim 6 - END"
         Hol3 = Tim6 - Tim5
-        if float(HOLD3) <= Hol3 + (Hol3 * TOLERANCE) and float(HOLD3) <= Hol3 - (Hol3 * TOLERANCE):
+        if float(HOLD3) <= Hol3 + (Hol3 * TOLERANCE) and float(HOLD3) >= Hol3 - (Hol3 * TOLERANCE):
             file.write("OK")
         else:
             file.write("NOK")
@@ -430,11 +437,14 @@ while button_pressed == False:
             if Per2 == "x" or Per2 > 1:
                 Per2X = True
             if float(Per1) > 1 and Per2X == True:
-                file.write(f"OK - Světlo svítilo dál a nezhaslo, ukončeno automaticky po definovaném čase\n")
-                OK = True
+                file.write(f"OK - Světlo svítilo dál, ukončeno automaticky po definovaném čase\n")
+                #OK = True
             else:
-                file.write(f"NOK - Světlo svítilo dál a zhaslo, ukončeno automaticky po definovaném časez\n")
+                file.write(f"NOK - Světlo zhaslo, ukončeno zhasnutím\n")
                 OK = False
+        elif INFINITE == False:
+            continue
+
         button_pressed = True
 
     #     print(f"{Val1} lux operative phase - Val1")
@@ -450,12 +460,14 @@ while button_pressed == False:
     #     print(f"{percent_one}% of fade")
     if DEBUG == True:
         micropython.mem_info()
+    pixels.fill((0, 0, 15*pix_val))  # BLUE
+    pixels.show()
     sleep(update_time)
 
 """Result comparison"""
 
 oled.fill(0)
-oled.text("Program:", 0, 0)
+oled.text("Program: ", 0, 0)
 if OK == True:
     oled.text("OK", 0, 24)
     program_result = "Měření OK"
@@ -479,10 +491,10 @@ while True:
     if button_ok.value() == 1:
         break
     if OK == True:
-        pixels.fill((0, 80, 0))
+        pixels.fill((0, 80*pix_val, 0))
         pixels.show()
     else:
-        pixels.fill((80, 0, 0))
+        pixels.fill((80*pix_val, 0, 0))
         pixels.show()
     sleep(0.1)
 
