@@ -8,12 +8,12 @@ version = "1.00 uni uni"
 """
 LUX meter
 
-UNIVERZÁLNÍ měření - nevyhodnotí nakonec OK nebo NOK stav - prostě zapisuje každých X sec!!
+UNIVERZÁLNÍ měření - zapisuje každých X sec!!
 
 RELAY
 kontrolní LED - bliká při čtení aktuální hodnoty
-3 tlačítka START/STOP, UP, DOWN
-1 reset
+3x tlačítka START/STOP, UP, DOWN
+1x reset
 """
 i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
 
