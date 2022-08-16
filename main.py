@@ -3,6 +3,8 @@
 # May 2021
 # edited by Michal Novak June 2022
 
+"""" IF LIST SHORTER THAN 6 ITEMS IT MAY LET YOU GO DOWN IDEFINITELY AND CURSOR DISSAPEARS """
+
 from machine import Pin, I2C
 from os import listdir
 from ssd1306 import SSD1306_I2C
@@ -12,10 +14,12 @@ from neopixel import Neopixel
 import DS1307, _thread, micropython
 
 # I2C variables
-id = 0
-sda = Pin(16)
-scl = Pin(17)
-i2c = I2C(id=id, scl=scl, sda=sda)
+#id = 0
+#sda = Pin(16)
+#scl = Pin(17)
+#i2c = I2C(id=id, scl=scl, sda=sda)
+i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
+
 
 # Screen Variables
 width = 128
@@ -35,7 +39,15 @@ button_ok = Pin(20, Pin.IN, Pin.PULL_DOWN)
 button_up = Pin(19, Pin.IN, Pin.PULL_DOWN)
 button_do  = Pin(18, Pin.IN, Pin.PULL_DOWN)
 
-button_down = True
+#button_down = True
+
+# strip of 1 chips, state machine 0, GPIO 28(pin34), RGB mode
+n_leds = 1
+pixels = Neopixel(n_leds, 0, 28, "GRB")
+
+# re-sets MOOD LED
+pixels.fill((0, 0, 0))
+pixels.show()
 
 
 def get_files():
