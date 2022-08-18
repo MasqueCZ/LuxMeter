@@ -6,7 +6,7 @@ from BH1750 import BH1750
 from neopixel import Neopixel
 import DS1307, _thread, micropython
 
-version = "1.28 TREVOS - still testing - branching out"
+version = "1.3 TREVOS - still testing"
 
 """
 LUX CORRIDOR meter
