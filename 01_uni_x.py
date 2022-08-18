@@ -12,7 +12,7 @@ The relay waits until it gets stable reading of OFF luminaire. And then start th
 
 UNIVERZÁLNÍ měření - nevyhodnotí nakonec OK nebo NOK stav !!
 
-ZKONTROLOVAT - freeze u třetí části
+!! ZKONTROLOVAT - freeze u třetí části
 
 """
 i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
