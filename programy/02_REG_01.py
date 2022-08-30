@@ -53,7 +53,9 @@ OK = True   # PROGRAM final verdict | False = NOK
 i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
 
 # display
-oled = SSD1306_I2C(128, 64, i2c)
+width = 128
+height = 64
+oled = SSD1306_I2C(width=width, height=height, i2c=i2c)
 oled.fill(0)
 
 # light meter module

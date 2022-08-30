@@ -14,10 +14,7 @@ import DS1307, _thread, micropython
 DEBUG = False
 
 # I2C variables
-id = 0
-sda = Pin(16)
-scl = Pin(17)
-i2c = I2C(id=id, scl=scl, sda=sda)
+i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
 
 # Screen Variables
 width = 128
@@ -30,14 +27,13 @@ total_lines = 6
 
 # create the display
 oled = SSD1306_I2C(width=width, height=height, i2c=i2c)
+oled.fill(0)
 oled.init_display()
 
 # Setup the Rotary Encoder - OK - UP - DOWN
 button_ok = Pin(20, Pin.IN, Pin.PULL_DOWN)
 button_up = Pin(19, Pin.IN, Pin.PULL_DOWN)
 button_do = Pin(18, Pin.IN, Pin.PULL_DOWN)
-
-button_down = True
 
 # strip of 1 chips, state machine 0, GPIO 28(pin34), RGB mode
 n_leds = 1
