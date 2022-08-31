@@ -96,7 +96,8 @@ def launch(filename):
     oled.text(filename, 1, 20)
     oled.show()
     sleep(0.5)
-    exec(open(filename).read())
+    progloc = ("/programy/"+filename)
+    exec(open(progloc).read())
     show_menu(file_list)
 
 
