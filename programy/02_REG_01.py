@@ -17,12 +17,15 @@ The relay waits until it gets stable reading of OFF luminaire. And then start th
 
 pridat kontrolu, jak jednou padne NOK, tak nemuze byt mereni OK !!
 
+casty freeze u 92 sec - proc? PROBOHA PROC??!!
+
 ZKONTROLOVAT - freeze u třetí části
 
 SROVNAT FAD1 detekci presnejsiho casu 
 
 Val0 vyhodnotit nakonec kdyz se nejaka hodnota bude rovnat pocatecni Val0 tak je KONEC
 
+zrusit druhy proces co bezi na dalsim jadru? Pujde obejit a zachovat funkce?
 
 define this >>
         if float(HOLD3) <= Hol3 + (Hol3 * TOLERANCE) and float(HOLD3) >= Hol3 - (Hol3 * TOLERANCE):
@@ -44,10 +47,10 @@ LEVEL2 = 25 #10%
 FADE3 = 8 #8s
 HOLD3 = 30 #30s
 LEVEL3 = 10 #10%
-INFINITE = False # if TRUE > HOLD2 INDEFINITELY or HOLD3 INDEFINITELY | FALSE if exact
+INFINITE = False # if TRUE > HOLD2 INDEFINITELY or HOLD3 INDEFINITELY | FALSE if exact by the times stated above
 
 TOLERANCE = 0.10 #tolerance porovnani dat 10%
-TOL_LUX = 0.02 #tolerance zmeny hodnoty v namerenych lumenech
+TOL_LUX = 0.02 #tolerance zmeny hodnoty v namerenych lumenech 2%
 cas_bezi = 0
 
 # display update and read data time 0.1 works well for now
@@ -237,13 +240,16 @@ sec_to_measure = time_actual[2]
 
 
 while button_pressed == False:
+    # LEDs to see whether it FROZE or NOT
     LED.toggle()
     pixels.fill((3*pix_val, 3*pix_val, 3*pix_val)) # WHITE
     pixels.show()
 
+    # updates time list
     time_list = ds.datetime()
     time_actual = [time_list[4], time_list[5], time_list[6]]
 
+    # TIME counters - updates 1 second counter which dictates if it is ready to read and write data
     if time_actual[2] > sec_to_measure or time_actual[2] < sec_to_measure:
         sec_to_measure = time_actual[2] # updates
         counter_log = 1 # calls datalogging
@@ -258,12 +264,14 @@ while button_pressed == False:
         counter_h += 1
 
 
+    # READS lumen value
     lux = light.luminance(BH1750.CONT_HIRES_1)
     if DEBUG == True:
         print(f"{lux} lux type {type(lux)}")
     lux = str(round(lux, 1))  # round to whole numbers
     oled.fill(0)
 
+    # DISPLAY update
     oled.text(str(counter_h) + ":" + str(counter_m) + ":" + str(counter_s) + f"/{celkovy_cas_rezerva}", 0, 0)
     oled.text(lux + " lx", 0, 12)
     oled.text("Phase: ", 0, 24)
@@ -271,10 +279,14 @@ while button_pressed == False:
     oled.text(phase2, 0, 48)
     oled.show()
 
-    # datalogger
+    # DATA LOGGER
+    # checks whether it is needed to write and compare LUX data
     if counter_log == 1:
+<<<<<<< Updated upstream
 
         print(f"another second has passed {counter_s}")
+=======
+>>>>>>> Stashed changes
         counter_log = 0
         lux_list.insert(0, lux)
         if len(lux_list) > 5:
@@ -300,18 +312,26 @@ while button_pressed == False:
 # OPERATIVE phase
     if Val0 == "x" and stable == True:
         Val0 = lux
+<<<<<<< Updated upstream
         Tim0 = get_seconds() # -5? play with this number in real situations
+=======
+        Tim0 = get_seconds() - 0  # play with this number in real situations | 0 sec for this is where all other starts
+        # TURNS THE LUMINAIRE ON AND WAITS 1 SEC FOR IT TO CATCH UP
+>>>>>>> Stashed changes
         relay.value(0)
-        """ upravit tuhle hodnotu, kdyby nestacil START UP a padalo to rovnou?"""
-        sleep(1)
+        #sleep(0) # lets try 0 here, whether it works or dont
         stable = False  # this condition and the line above IS enough to catch the OFF ON transition, so it does not evaluate STABLE = TRUE immediately
         file.write("Measurement:" + "\n")
         file.write("Stable at: " + str(Val0) + "lx\n")
 
     if Val1 == "x" and stable == True:
         Val1 = lux
+<<<<<<< Updated upstream
         Tim1 = get_seconds() - 6
 
+=======
+        Tim1 = get_seconds() - 5
+>>>>>>> Stashed changes
         if float(Val1) == 0.0:
             button_pressed = True
             program_result = "Val1 nemuze byt nula"
@@ -322,7 +342,6 @@ while button_pressed == False:
 # Standby 1
     if Tim1 != "x" and Tim2 == "x" and stable_boolean == False:
         Tim2 = get_seconds()
-        #             Tim2 -= Tim1
         phase = "StandBy 1:"
         phase2 = "Tim 2 - FADE"
         Hol1 = Tim2 - Tim1
