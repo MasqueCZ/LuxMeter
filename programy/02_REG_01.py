@@ -6,7 +6,7 @@ from BH1750 import BH1750
 from neopixel import Neopixel
 import DS1307, _thread, micropython
 
-version = "1.3 TREVOS - still testing"
+version = "1.31 TREVOS - still testing"
 
 """
 LUX CORRIDOR meter
@@ -22,6 +22,14 @@ ZKONTROLOVAT - freeze u třetí části
 SROVNAT FAD1 detekci presnejsiho casu 
 
 Val0 vyhodnotit nakonec kdyz se nejaka hodnota bude rovnat pocatecni Val0 tak je KONEC
+
+
+define this >>
+        if float(HOLD3) <= Hol3 + (Hol3 * TOLERANCE) and float(HOLD3) >= Hol3 - (Hol3 * TOLERANCE):
+            file.write("OK")
+        else:
+            file.write("NOK")
+            OK = False
 
 
 """
@@ -237,8 +245,8 @@ while button_pressed == False:
     time_actual = [time_list[4], time_list[5], time_list[6]]
 
     if time_actual[2] > sec_to_measure or time_actual[2] < sec_to_measure:
-        sec_to_measure = time_actual[2]
-        counter_log = 1
+        sec_to_measure = time_actual[2] # updates
+        counter_log = 1 # calls datalogging
         counter_s += 1
 
     if counter_s >= 60:
@@ -252,8 +260,7 @@ while button_pressed == False:
 
     lux = light.luminance(BH1750.CONT_HIRES_1)
     if DEBUG == True:
-        print(f"{lux} lux")
-    lux = round(lux, 0)
+        print(f"{lux} lux type {type(lux)}")
     lux = str(round(lux, 1))  # round to whole numbers
     oled.fill(0)
 
@@ -267,12 +274,7 @@ while button_pressed == False:
     # datalogger
     if counter_log == 1:
 
-        #         file.write(str(counter_h) + ":" + str(counter_m) + ":" + str(counter_s) + "-" + lux + "\n")
-        #         file.flush()
-
-        #         file.write(str(value) + "" + "\n")
-        #         file.flush()
-
+        print(f"another second has passed {counter_s}")
         counter_log = 0
         lux_list.insert(0, lux)
         if len(lux_list) > 5:
@@ -298,7 +300,7 @@ while button_pressed == False:
 # OPERATIVE phase
     if Val0 == "x" and stable == True:
         Val0 = lux
-        Tim0 = get_seconds() - 5  # play with this number in real situations
+        Tim0 = get_seconds() # -5? play with this number in real situations
         relay.value(0)
         """ upravit tuhle hodnotu, kdyby nestacil START UP a padalo to rovnou?"""
         sleep(1)
@@ -309,11 +311,11 @@ while button_pressed == False:
     if Val1 == "x" and stable == True:
         Val1 = lux
         Tim1 = get_seconds() - 6
+
         if float(Val1) == 0.0:
             button_pressed = True
             program_result = "Val1 nemuze byt nula"
-        #                 lux_value.insert(0, False)
-        #                 lux_value.pop()
+
         phase = "Operative:"
         phase2 = "Tim 1 - HOLD"
 
@@ -325,6 +327,7 @@ while button_pressed == False:
         phase2 = "Tim 2 - FADE"
         Hol1 = Tim2 - Tim1
         Fad1 = Tim1 - Tim0
+
         if Fad1 <= 1 and FADE1 <= 1:
             file.write("OK")
         elif Fad1 <= (10 * FADE1):
@@ -335,6 +338,7 @@ while button_pressed == False:
             else:
                 file.write("NOK")
                 OK = False
+
         file.write(" - Fade time 1: " + str(Fad1) + "s\n")
 
         if float(HOLD1) <= Hol1 + (Hol1 * TOLERANCE) and float(HOLD1) >= Hol1 - (Hol1 * TOLERANCE):
@@ -342,6 +346,7 @@ while button_pressed == False:
         else:
             file.write("NOK")
             OK = False
+
         file.write(" - Hold time 1: " + str(Hol1) + "s at value: " + str(Val1) + "lx (100%)\n")
         file.flush()
 
@@ -352,6 +357,7 @@ while button_pressed == False:
         phase2 = "Tim 3 - HOLD"
         Fad2 = Tim3 - Tim2
         Per1 = round((float(Val2) / float(Val1)) * 100, 1)
+
         if float(Val2) == 0.0:
             button_pressed = True #ENDS CYCLE
             program_result = "END at Tim3, Val2 = 0"
@@ -363,13 +369,16 @@ while button_pressed == False:
         else:
             file.write("NOK")
             OK = False
+
         file.write(" - Fade time 2: " + str(Fad2) + "s\n")
+
         if float(LEVEL2) <= Per1 + (Per1 * TOLERANCE) and float(LEVEL2) >= Per1 - (Per1 * TOLERANCE):
             file.write("OK")
         else:
             file.write("NOK")
             OK = False
-        file.write(" - at " + str(Per1) + "%" + "\n")
+
+        file.write(" - level 2: " + str(Per1) + "%" + "\n")
         file.flush()
 
 # Standby 2
@@ -395,6 +404,7 @@ while button_pressed == False:
         Per2 = round(float(Val3) / float(Val1) * 100, 1)
         phase2 = "Tim 5 - HOLD"
         Fad3 = Tim5 - Tim4
+
         if float(FADE3) <= Fad3 + (Fad3 * TOLERANCE) and float(FADE3) >= Fad3 - (Fad3 * TOLERANCE):
             file.write("OK")
         elif Fad3 <= (10 * FADE3):
@@ -402,13 +412,16 @@ while button_pressed == False:
         else:
             file.write("NOK")
             OK = False
+
         file.write("- fade time 3: " + str(Fad3) + "s\n")
+
         if float(LEVEL3) <= Per2 + (Per2 * TOLERANCE) and float(LEVEL3) >= Per2 - (Per2 * TOLERANCE):
             file.write("OK")
         else:
             file.write("NOK")
             OK = False
-        file.write(f"- to level {Per2}%\n")
+
+        file.write(f"- to level 3: {Per2}%\n")
         file.flush()
 
     if Tim6 == "x" and Tim5 != "x" and stable_boolean == False:
@@ -416,58 +429,54 @@ while button_pressed == False:
         Val4 = lux
         phase2 = "Tim 6 - END"
         Hol3 = Tim6 - Tim5
+
         if float(HOLD3) <= Hol3 + (Hol3 * TOLERANCE) and float(HOLD3) >= Hol3 - (Hol3 * TOLERANCE):
             file.write("OK")
         else:
             file.write("NOK")
             OK = False
+
         file.write("- hold time 3: " + str(Hol3) + "s at value: " + str(Val3) + "lx " + "\n")
+        file.write("Final lx value: " + str(Val4) + "\n")
         file.flush()
         button_pressed = True
 
     #AUTOMATIC END if measuring too long TIME+10%
     cas_bezi = float(get_seconds())
     cas_celeho_testu = float(trvani_s_rezervou) * 1.0
+
     if DEBUG == True:
         print(f"{cas_bezi}/{cas_celeho_testu}")
+
     if cas_bezi >= cas_celeho_testu:
+        print("piskej KONEC KURVA!")
         if DEBUG == True:
             print(Per1)
             print(Per2)
-#        file.write("Program dlouhý a ukončen po definovaných časech +10%" + "\n")
+
+        button_pressed = True
         if INFINITE == True:
             if Per2 == "x" or Per2 > 1:
                 Per2X = True
             if float(Per1) > 1 and Per2X == True:
                 file.write(f"OK - Světlo svítilo dál, ukončeno automaticky po definovaném čase\n")
-                #OK = True
+                OK = True
             else:
                 file.write(f"NOK - Světlo zhaslo, ukončeno zhasnutím\n")
                 OK = False
         elif INFINITE == False:
             continue
 
-        button_pressed = True
 
-    #     print(f"{Val1} lux operative phase - Val1")
-    #     print(f"{Tim1} s - operative phase HOLD 1 - Tim1")
-    #     print(f"{Tim2} s - standby phase1 - fade2 start - Tim2")
-    #     print(f"{Tim3} s - standby phase1 - fade2 end - Tim3")
-    #     print(f"{Val2} lux ({Per1}%) standby phase1 - Val2")
-    #     print(f"{Tim4} s - standby phase2 - fade3 start - Tim4")
-    #     print(f"{Tim5} s - standby phase2 - fade3 end - Tim5")
-    #     print(f"{Val3} lux ({Per2}%) standby phase2 - Val3")
-    #     print(f"{Tim6} s - standby phase2 - END - Tim6")
-    #     print(f"{Val4} lux standby phase2 - END Val4")
-    #     print(f"{percent_one}% of fade")
+
     if DEBUG == True:
         micropython.mem_info()
+
     pixels.fill((0, 0, 15*pix_val))  # BLUE
     pixels.show()
     sleep(update_time)
 
 """Result comparison"""
-
 oled.fill(0)
 oled.text("Program: ", 0, 0)
 if OK == True:
@@ -483,8 +492,8 @@ file.write("\n" + "Result:" + program_result + "\n")
 #porovnani vsech dat a vyhodnocovani OK ci NOK do listu, pokud celi list OK, tak OK test, else NOK
 #nebo jedna promenna, ktera je 0 a pokud program vyhodnoti NOK tak da +1
 
-relay.value(1)
-LED.value(0)
+relay.value(1) #zhasne svetlo
+LED.value(0) #zhasne kontrolni led na RPiPico
 file.close()
 
 # sets MOOD LED to NOK or OK
