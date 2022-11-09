@@ -1,59 +1,30 @@
 from machine import Pin, I2C
-#from os import listdir
+from os import listdir
 from ssd1306 import SSD1306_I2C
 from utime import sleep
 from BH1750 import BH1750
 from neopixel import Neopixel
-import DS1307
-import _thread
-import micropython
+import DS1307, _thread, micropython
 
-v = "1.32 TREVOS"
-version = f"{v} - F0.7H60F32L25H60F8L10H30"
+v = "1.4-07"
+version = f"{v} - 07 FIN:0.7s, RON:0s/100%, FOUT:180s, ABL:20%, SOFF:1200s"
 
 """
-LUX CORRIDOR meter - testovaci a vyvojovy soubor #1
+LUX CORRIDOR meter
 
 The relay waits until it gets stable reading of OFF luminaire. And then start the cycle of measurement and data-write phase.
-
-------------------------------------------
-upraveno
--spravne pojmenovani souboru - bude serazeno logicky dle data (u sekund to nefunguje proc??)
--pridani kratkeho popisu do jmena souboru
-------------------------------------------
-
-prevest LUX na integer
-
-pridat kontrolu, jak jednou padne NOK, tak nemuze byt mereni OK !!
-
-pridat text kdyz mereni freezne - nejde asi nijak zapsat do souboru - ale jde nakonec napsat text, ze dojel automaticky a nebyl ukoncen 
-
-SROVNAT FAD1 detekci presnejsiho casu 
-
-Val0 vyhodnotit nakonec kdyz se nejaka hodnota bude rovnat pocatecni Val0 tak je KONEC
-
-zrusit druhy proces co bezi na dalsim jadru? Pujde obejit a zachovat funkce?
-
-define this >>
-        if float(HOLD3) <= Hol3 + (Hol3 * TOLERANCE) and float(HOLD3) >= Hol3 - (Hol3 * TOLERANCE):
-            file.write("OK")
-        else:
-            file.write("NOK")
-            OK = False
-
-
 """
 DEBUG = False #If TRUE, program shows extra data in shell
 
-FADE1 = 0.7 #can't be really measured - compared if there is ~3 sec difference? (to adjust to the start up of the driver)
-HOLD1 = 300 #300 = 5 min
-LEVEL1 = 100 #can't be checked - kinda useless here, but important for clearer reading of variables
-FADE2 = 32 #32
-HOLD2 = 60 #602 even when the CORRIDOR won't stop it needs time to know how long to measure
-LEVEL2 = 30 #30%
-FADE3 = 0 #s
-HOLD3 = 0 #0s
-LEVEL3 = 0 #0%
+FADE1 = 0.7
+HOLD1 = 0
+LEVEL1 = 100
+FADE2 = 180
+HOLD2 = 1200 #even when the CORRIDOR won't stop it needs time to know how long to measure
+LEVEL2 = 20
+FADE3 = 0
+HOLD3 = 0
+LEVEL3 = 0
 INFINITE = False # if TRUE > HOLD2 INDEFINITELY or HOLD3 INDEFINITELY | FALSE if exact by the times stated above
 
 TOLERANCE = 0.10 #tolerance porovnani dat 10%
