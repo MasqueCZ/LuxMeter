@@ -6,7 +6,7 @@ from BH1750 import BH1750
 from neopixel import Neopixel
 import DS1307, _thread, micropython
 
-v = "1.4-02"
+v = "2.4-02"
 version = f"{v} - 02 FIN:0.7s, RON:150s/100%, FOUT:30s, ABL:10%, SOFF:/"
 
 """
@@ -38,6 +38,7 @@ pix_val = 0.5 # variable for PIXELS value
 #program_end = False
 program_result = "nevyhodnocen/program ukončen předčasně"
 OK = True   # PROGRAM final verdict | False = NOK
+
 
 i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
 
@@ -109,19 +110,17 @@ def get_seconds():
     allseconds = (counter_s + (counter_m * 60) + (counter_h * 60 * 60))
     return allseconds
 
-button_pressed = False
-
-
-def button_reader_thread():
-    global button_pressed
-
-    while True:
-        if button_ok.value() == 1:
-            button_pressed = True
-        sleep(0.05)
-
-
-_thread.start_new_thread(button_reader_thread, ())
+#button_pressed = False
+#def button_reader_thread():
+#    global button_pressed
+#
+#    while True:
+#        if button_ok.value() == 1:
+#            button_pressed = True
+#        sleep(0.05)
+#
+#
+#_thread.start_new_thread(button_reader_thread, ())
 
 # set variables for measurement and comparison
 """
@@ -172,7 +171,9 @@ lux_value = [False, False, False, False, False]
 stable_boolean = False
 
 # waiting phase
-while button_pressed == False:
+while True:
+    if button_ok.value() == 1:
+        break
     LED.toggle()
     oled.fill(0)
     lux = light.luminance(BH1750.CONT_HIRES_1)
@@ -191,7 +192,7 @@ pixels.show()
 sleep(1)
 
 # button reset
-button_pressed = False
+#button_pressed = False
 
 # measurement phase
 time_list = ds.datetime()
@@ -226,7 +227,9 @@ sec_to_measure = time_actual[2]
 
 
 
-while button_pressed == False:
+while True:
+    if button_ok.value() == 1:
+        break
     # LEDs to see whether it FROZE or NOT
     LED.toggle()
     pixels.fill((3*pix_val, 3*pix_val, 3*pix_val)) # WHITE
@@ -442,6 +445,7 @@ while button_pressed == False:
 
     if cas_bezi >= cas_celeho_testu:
         print("piskej KONEC KURVA!")
+
         if DEBUG == True:
             print(Per1)
             print(Per2)
@@ -458,7 +462,7 @@ while button_pressed == False:
                 OK = False
         elif INFINITE == False:
             continue
-
+        break
 
 
     if DEBUG == True:
@@ -474,9 +478,13 @@ oled.text("Program: ", 0, 0)
 if OK == True:
     oled.text("OK", 0, 24)
     program_result = "Měření OK"
+    pixels.fill((0, 80 * pix_val, 0))
+    pixels.show()
 else:
     oled.text("NOK", 0, 24)
     program_result = "Měření NOK"
+    pixels.fill((80 * pix_val, 0, 0))
+    pixels.show()
 oled.show()
 
 file.write("\n" + "Result:" + program_result + "\n")
@@ -488,18 +496,10 @@ relay.value(1) #zhasne svetlo
 LED.value(0) #zhasne kontrolni led na RPiPico
 file.close()
 
-# sets MOOD LED to NOK or OK
 # WAIT phase for button click before jumping back to the menu
 while True:
     if button_ok.value() == 1:
         break
-    if OK == True:
-        pixels.fill((0, 80*pix_val, 0))
-        pixels.show()
-    else:
-        pixels.fill((80*pix_val, 0, 0))
-        pixels.show()
-    sleep(0.1)
 
 # re-sets MOOD LED to END
 pixels.fill((0, 0, 0))

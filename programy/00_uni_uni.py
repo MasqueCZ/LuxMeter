@@ -20,8 +20,12 @@ kontrolní LED - bliká při čtení aktuální hodnoty
 ADD check, if last 5 values are exactly the same for example ZERO, write down time at which paused writing to file. 
 AND wait for change. Then start LOGGING again.
 
+WAIT PHASE HAS BUG, it STOPS signaling that it measures, seems like it froze
+
 GRAPH turn on and turn off? Variable?
 """
+DATA_SAVE = True
+
 i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
 
 # display
@@ -50,7 +54,7 @@ pixels.fill((25, 10, 0))
 pixels.show()
 
 # buttons
-button = Pin(20, Pin.IN, Pin.PULL_DOWN)
+button_ok = Pin(20, Pin.IN, Pin.PULL_DOWN)
 button_up = Pin(19, Pin.IN, Pin.PULL_DOWN)
 button_down = Pin(18, Pin.IN, Pin.PULL_DOWN)
 
@@ -82,7 +86,7 @@ frequency = freq_list[0]
 selection = 0
 
 while True:
-    if button.value() == 1:
+    if button_ok.value() == 1:
         break
     if button_up.value() == 1:
         if selection >= 6:
@@ -163,7 +167,7 @@ while True:
     pixels.fill(pix_red)
     pixels.show()
 
-    if button.value() == 1:
+    if button_ok.value() == 1:
         break
 
     time_list = ds.datetime()

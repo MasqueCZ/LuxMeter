@@ -8,8 +8,8 @@ import DS1307
 import _thread
 import micropython
 
-v = "1.32 TREVOS"
-version = f"{v} - F0.7H60F32L25H60F8L10H30"
+v = "2.0 vyvoj"
+version = f"{v} - F0.7H300F32L30H60F0L0H0"
 
 """
 LUX CORRIDOR meter - testovaci a vyvojovy soubor #1
@@ -20,6 +20,7 @@ The relay waits until it gets stable reading of OFF luminaire. And then start th
 upraveno
 -spravne pojmenovani souboru - bude serazeno logicky dle data (u sekund to nefunguje proc??)
 -pridani kratkeho popisu do jmena souboru
+-zrušen druhý proces
 ------------------------------------------
 
 prevest LUX na integer
@@ -31,8 +32,6 @@ pridat text kdyz mereni freezne - nejde asi nijak zapsat do souboru - ale jde na
 SROVNAT FAD1 detekci presnejsiho casu 
 
 Val0 vyhodnotit nakonec kdyz se nejaka hodnota bude rovnat pocatecni Val0 tak je KONEC
-
-zrusit druhy proces co bezi na dalsim jadru? Pujde obejit a zachovat funkce?
 
 define this >>
         if float(HOLD3) <= Hol3 + (Hol3 * TOLERANCE) and float(HOLD3) >= Hol3 - (Hol3 * TOLERANCE):
@@ -54,11 +53,11 @@ LEVEL2 = 30 #30%
 FADE3 = 0 #s
 HOLD3 = 0 #0s
 LEVEL3 = 0 #0%
-INFINITE = False # if TRUE > HOLD2 INDEFINITELY or HOLD3 INDEFINITELY | FALSE if exact by the times stated above
+INFINITE = True # if TRUE > HOLD2 INDEFINITELY or HOLD3 INDEFINITELY | FALSE if exact by the times stated above
 
 TOLERANCE = 0.10 #tolerance porovnani dat 10%
 TOL_LUX = 0.02 #tolerance zmeny hodnoty v namerenych lumenech 2%
-cas_bezi = 0
+cas_bezi = 0 #aktualni cas behem testu
 
 # display update and read data time 0.1 works well for now
 update_time = 0.42
@@ -67,6 +66,7 @@ pix_val = 0.5 # variable for PIXELS value
 #program_end = False
 program_result = "nevyhodnocen/program ukončen předčasně"
 OK = True   # PROGRAM final verdict | False = NOK
+
 
 i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
 
@@ -138,19 +138,17 @@ def get_seconds():
     allseconds = (counter_s + (counter_m * 60) + (counter_h * 60 * 60))
     return allseconds
 
-button_pressed = False
-
-
-def button_reader_thread():
-    global button_pressed
-
-    while True:
-        if button_ok.value() == 1:
-            button_pressed = True
-        sleep(0.05)
-
-
-_thread.start_new_thread(button_reader_thread, ())
+#button_pressed = False
+#def button_reader_thread():
+#    global button_pressed
+#
+#    while True:
+#        if button_ok.value() == 1:
+#            button_pressed = True
+#        sleep(0.05)
+#
+#
+#_thread.start_new_thread(button_reader_thread, ())
 
 # set variables for measurement and comparison
 """
@@ -201,7 +199,9 @@ lux_value = [False, False, False, False, False]
 stable_boolean = False
 
 # waiting phase
-while button_pressed == False:
+while True:
+    if button_ok.value() == 1:
+        break
     LED.toggle()
     oled.fill(0)
     lux = light.luminance(BH1750.CONT_HIRES_1)
@@ -220,7 +220,7 @@ pixels.show()
 sleep(1)
 
 # button reset
-button_pressed = False
+#button_pressed = False
 
 # measurement phase
 time_list = ds.datetime()
@@ -255,7 +255,9 @@ sec_to_measure = time_actual[2]
 
 
 
-while button_pressed == False:
+while True:
+    if button_ok.value() == 1:
+        break
     # LEDs to see whether it FROZE or NOT
     LED.toggle()
     pixels.fill((3*pix_val, 3*pix_val, 3*pix_val)) # WHITE
@@ -471,6 +473,7 @@ while button_pressed == False:
 
     if cas_bezi >= cas_celeho_testu:
         print("piskej KONEC KURVA!")
+
         if DEBUG == True:
             print(Per1)
             print(Per2)
@@ -487,7 +490,7 @@ while button_pressed == False:
                 OK = False
         elif INFINITE == False:
             continue
-
+        break
 
 
     if DEBUG == True:
@@ -503,9 +506,13 @@ oled.text("Program: ", 0, 0)
 if OK == True:
     oled.text("OK", 0, 24)
     program_result = "Měření OK"
+    pixels.fill((0, 80 * pix_val, 0))
+    pixels.show()
 else:
     oled.text("NOK", 0, 24)
     program_result = "Měření NOK"
+    pixels.fill((80 * pix_val, 0, 0))
+    pixels.show()
 oled.show()
 
 file.write("\n" + "Result:" + program_result + "\n")
@@ -517,18 +524,10 @@ relay.value(1) #zhasne svetlo
 LED.value(0) #zhasne kontrolni led na RPiPico
 file.close()
 
-# sets MOOD LED to NOK or OK
 # WAIT phase for button click before jumping back to the menu
 while True:
     if button_ok.value() == 1:
         break
-    if OK == True:
-        pixels.fill((0, 80*pix_val, 0))
-        pixels.show()
-    else:
-        pixels.fill((80*pix_val, 0, 0))
-        pixels.show()
-    sleep(0.1)
 
 # re-sets MOOD LED to END
 pixels.fill((0, 0, 0))
