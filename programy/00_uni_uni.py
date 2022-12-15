@@ -253,7 +253,7 @@ while True:
     oled.show()
 
     #fckadoodledoo MAGIC turn off
-    if TIMED_END==True and counter_s > TIMER_VALUE:
+    if TIMED_END==True and counter_h > TIMER_VALUE:
         file.write(f"Ukončeno automaticky po čase: {TIMER_VALUE} h \n")
         break
 
