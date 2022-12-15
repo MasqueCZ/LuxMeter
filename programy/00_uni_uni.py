@@ -10,6 +10,7 @@ v = "1.00 uni"
 LUX meter
 
 UNIVERZÁLNÍ měření - zapisuje každých X sec!! (1, 5, 10, 30, 60, 600, 3600)
+může mít nastavený čas, po kterém má program automaticky vypnout - teď nastaveno na 7 HODIN !!
 
 RELAY - zapne po zapnutí měření
 kontrolní LED - bliká při čtení aktuální hodnoty
@@ -25,6 +26,9 @@ WAIT PHASE HAS BUG, it STOPS signaling that it measures, seems like it froze
 GRAPH turn on and turn off? Variable?
 """
 DATA_SAVE = True
+stable_checker = 3 #values
+TIMED_END = True
+TIMER_VALUE = 7 #in hours
 
 i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
 
@@ -198,39 +202,34 @@ while True:
     if counter_log == frequency or counter_log >= frequency:
 
         data_saver.append(lm)
-        print(lm)
-        if len(data_saver) > 5:
+        if len(data_saver) > stable_checker:
             data_saver.pop(0)
-            print(data_saver)
-            for i in range(0, 4):
+            for i in range(0, stable_checker - 1):
                 if int(data_saver[i]) == lm:
                     save_data += 1
-                    print(data_saver[i])
-                    print(save_data)
                 else:
                     save_data = 0
                     waiting = False
                     print(lm)
                     print(save_data)
 
-        if save_data >= 5:
+        if save_data >= stable_checker:
             if waiting == True:
                 pixels.fill(pix_blue)
-                pixels.show()
-                continue
+                oled.text(str(lm) + " lx - STABLE", 0, 12)
+                #continue
             else:
                 waiting = True
                 pixels.fill(pix_blue)
                 file.write(f"stable\n")
-                pixels.show()
+
+                oled.text(str(lm) + " lx - STABLE", 0, 12)
         else:
             file.write(str(counter_h) + ":" + str(counter_m) + ":" + str(counter_s) + "-" + str(lm) + "\n")
             pixels.fill(pix_green)
-            pixels.show()
+
         file.flush()
         counter_log = 0
-
-        #pixels.show()
 
         graph_list.append(lm)
 
@@ -250,7 +249,13 @@ while True:
             round(graph_val, 0)
             oled.rect((2+(4*i)), 60 - (int(graph_val)), 3, 2, 1)
 
+    pixels.show()
     oled.show()
+
+    #fckadoodledoo MAGIC turn off
+    if TIMED_END==True and counter_s > TIMER_VALUE:
+        file.write(f"Ukončeno automaticky po čase: {TIMER_VALUE} h \n")
+        break
 
     utime.sleep(update_time)
 

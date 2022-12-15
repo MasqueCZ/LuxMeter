@@ -168,3 +168,5 @@ while True:
         launch(file_list[(highlight - 1) + shift])
         if DEBUG == True:
             print("Returned from launch")
+    pixels.fill((0,0,0))
+    pixels.show()
