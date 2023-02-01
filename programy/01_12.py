@@ -13,6 +13,9 @@ version = f"{v} - 12 FIN:0.7s, RON:270s/100%, FOUT:32s, ABL:10%, SOFF:600s"
 LUX CORRIDOR meter
 
 The relay waits until it gets stable reading of OFF luminaire. And then start the cycle of measurement and data-write phase.
+
+zjednodušit program
+dát všechny programy do jednoho, jen aby si člověk vybral 1 - XX  a podlě něj to dalo vlastnosti měření a popis souboru
 """
 DEBUG = False #If TRUE, program shows extra data in shell
 
@@ -304,6 +307,7 @@ while True:
         stable = False  # this condition and the line above IS enough to catch the OFF ON transition, so it does not evaluate STABLE = TRUE immediately
         file.write("Measurement:" + "\n")
         file.write("Stable at: " + str(Val0) + "lx\n")
+        sleep(0.5)
 
     if Val1 == "x" and stable == True:
         Val1 = lux
@@ -461,7 +465,7 @@ while True:
                 file.write(f"NOK - Světlo zhaslo, ukončeno zhasnutím\n")
                 OK = False
         elif INFINITE == False:
-            continue
+            break
         break
 
 

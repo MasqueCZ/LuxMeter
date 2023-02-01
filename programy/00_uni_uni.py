@@ -5,30 +5,38 @@ from neopixel import Neopixel
 import DS1307
 import utime
 
-v = "1.00 uni"
+v = "1.02 uni"
 """
 LUX meter
 
-UNIVERZÁLNÍ měření - zapisuje každých X sec!! (1, 5, 10, 30, 60, 600, 3600)
+UNIVERSAL measurement - writes data every X sec!! (1, 5, 10, 30, 60, 600, 3600)
 může mít nastavený čas, po kterém má program automaticky vypnout - teď nastaveno na 7 HODIN !!
+Pokud je x(3) měření po sobě stejných, tak šetří data a zapíše jen "stable" - zkrátit
+Na displeji je graf z posledních 30 hodnot
+
+řízeno >>
+DATA_SAVE a TIMED_END
 
 RELAY - zapne po zapnutí měření
 kontrolní LED - bliká při čtení aktuální hodnoty
+Display(i2c) 128x64
+RTC module
 3x tlačítka START/STOP, UP, DOWN
 1x reset
-+ GRAPH
++ GRAPH of 30 last values
 
-ADD check, if last 5 values are exactly the same for example ZERO, write down time at which paused writing to file. 
-AND wait for change. Then start LOGGING again.
 
-WAIT PHASE HAS BUG, it STOPS signaling that it measures, seems like it froze
+Přidat verzi: program name: uni-cycle? Pun intended.
+Nastavit délku doby měření (ON-stykače) v hodinách, když 0, tak bez limitu a ostatní nastavování přeskočit.
+Nastavit délku doby měření v (OFF-stykače) v hodinách, měření stále bude zapisovat
+Nastavit počet cyklů. 
 
 GRAPH turn on and turn off? Variable?
 """
+
 DATA_SAVE = True
 stable_checker = 3 #values
 TIMED_END = True
-TIMER_VALUE = 7 #in hours
 
 i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
 
@@ -62,12 +70,13 @@ button_ok = Pin(20, Pin.IN, Pin.PULL_DOWN)
 button_up = Pin(19, Pin.IN, Pin.PULL_DOWN)
 button_down = Pin(18, Pin.IN, Pin.PULL_DOWN)
 
-# enable oscillator (for starting a new machine)
+# enable CLOCK oscillator (for starting a new machine)
 # ds.halt(FALSE)
 
 # for setting the TIME and EDITS
 # sets actual time year/month/day/DOW(starts with sunday=0)/hour/minute/second/subseconds
-# now = (2022, 5, 30, 1, 8, 57, 30, 0)
+# print(ds.datetime())
+# now = (2023, 1, 26, 4, 7, 50, 0, 0)
 # ds.datetime(now)
 
 
@@ -75,6 +84,7 @@ def get_time():
     time_list = ds.datetime()
     print(f"Time is {time_list[4]}:{time_list[5]}:{time_list[6]} {time_list[0]}-{time_list[1]}-{time_list[2]}")
 
+get_time()
 
 def lux():
     lux = light.luminance(BH1750.CONT_HIRES_1)
@@ -89,11 +99,12 @@ freq_list = (1, 5, 10, 30, 60, 600, 3600)
 frequency = freq_list[0]
 selection = 0
 
+#selection of SAMPLING frequency
 while True:
     if button_ok.value() == 1:
         break
     if button_up.value() == 1:
-        if selection >= 6:
+        if selection >= 6: #zkopirovat tohle do MAIN.py menu
             continue
         else:
             selection += 1
@@ -110,10 +121,52 @@ while True:
     lm = lux()
 
     oled.text(f"sampling {frequency}s", 0, 0)
-    oled.text(str(lm) + " lx", 0, 12)
+    oled.text(f"...", 0, 12)
+    oled.text(str(lm) + " lx", 0, 24)
     oled.text("PRESS START", 15, 36)
     oled.show()
-    utime.sleep(0.2)
+    utime.sleep(0.14)
+
+utime.sleep(1)
+
+
+timeOFF_list = (0, 1, 2, 4, 8, 12, 24, 9999)
+timeOFF = timeOFF_list[0]
+selectionOFF = 0
+
+# selection of OFF TIME
+while True:
+    if button_ok.value() == 1:
+        break
+    if button_up.value() == 1:
+        if selectionOFF >= len(timeOFF_list)-1:
+            continue
+        else:
+            selectionOFF += 1
+            timeOFF = timeOFF_list[selectionOFF]
+    if button_down.value() == 1:
+        if selectionOFF <= 0:
+            continue
+        else:
+            selectionOFF -= 1
+            timeOFF = timeOFF_list[selectionOFF]
+
+    LED.toggle()
+    oled.fill(0)
+    lm = lux()
+
+    oled.text(f"sampling {frequency}s", 0, 0)
+    if timeOFF == 0:
+        oled.text(f"Nevypne..", 0,12)
+    else:
+        oled.text(f"Vypne po:{timeOFF}h", 0, 12)
+    oled.text(str(lm) + " lx", 0, 24)
+    oled.text("PRESS START", 15, 36)
+    oled.show()
+    utime.sleep(0.14)
+
+if timeOFF == 0:
+    TIMED_END = False
 
 # sets MOOD LED to MEASUREMENT STARTS
 pixels.fill((0, 0, 10))
@@ -135,7 +188,7 @@ test_file_name = (
     f"/mereni/{time_list[0]}-{time_list[1]}-{time_list[2]}_{time_list[4]}-{time_list[5]}-{time_list[6]}-{v}-freq{frequency}s.txt")
 file = open(test_file_name, "w")
 file.write(
-    f"Program started {time_list[4]}:{time_list[5]}:{time_list[6]} {time_list[0]}-{time_list[1]}-{time_list[2]} v{v}_freq_{frequency}s" + "\n")
+    f"Program started {time_list[4]}:{time_list[5]}:{time_list[6]} {time_list[0]}-{time_list[1]}-{time_list[2]} v{v}_freq_{frequency}s with time OFF set to {timeOFF}h" + "\n")
 file.flush()
 
 # display update and read data time 0.1 works well for now
@@ -159,7 +212,7 @@ graph_max = 2
 oled.fill(0)
 
 data_saver = []
-save_data = 4
+save_data = stable_checker - 1
 waiting = False
 pix_green = (0, 25, 0)
 pix_blue = (0, 0, 25)
@@ -210,14 +263,12 @@ while True:
                 else:
                     save_data = 0
                     waiting = False
-                    print(lm)
-                    print(save_data)
 
         if save_data >= stable_checker:
             if waiting == True:
                 pixels.fill(pix_blue)
                 oled.text(str(lm) + " lx - STABLE", 0, 12)
-                #continue
+                #add data write if there was MINUTE up or HOUR up - depending on time, even though it is STABLE
             else:
                 waiting = True
                 pixels.fill(pix_blue)
@@ -253,8 +304,9 @@ while True:
     oled.show()
 
     #fckadoodledoo MAGIC turn off
-    if TIMED_END==True and counter_h > TIMER_VALUE:
-        file.write(f"Ukončeno automaticky po čase: {TIMER_VALUE} h \n")
+    if TIMED_END==True and counter_h >= timeOFF:
+        file.write(str(counter_h) + ":" + str(counter_m) + ":" + str(counter_s) + "-" + str(lm) + "\n")
+        file.write(f"Ukončeno automaticky po čase: {timeOFF} h \n")
         break
 
     utime.sleep(update_time)
@@ -264,6 +316,6 @@ LED.value(0)
 oled.fill(0)
 oled.show()
 file.close()
-utime.sleep(2)
+utime.sleep(1)
 
 """no END screen ANIMATION"""
