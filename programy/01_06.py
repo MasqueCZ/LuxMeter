@@ -8,56 +8,30 @@ import DS1307
 import _thread
 import micropython
 
-v = "2.0 vyvoj"
-version = f"{v} - F0.7H300F32L30H60F0L0H0"
+v = "2.4-06"
+version = f"{v} - 06 FIN:0.7s, RON:300s/100%, FOUT:32s, ABL:30%, SOFF:/"
 
 """
-LUX CORRIDOR meter - testovaci a vyvojovy soubor #1
+LUX CORRIDOR meter
 
 The relay waits until it gets stable reading of OFF luminaire. And then start the cycle of measurement and data-write phase.
-
-------------------------------------------
-upraveno
--spravne pojmenovani souboru - bude serazeno logicky dle data (u sekund to nefunguje proc??)
--pridani kratkeho popisu do jmena souboru
--zrušen druhý proces
-------------------------------------------
-
-prevest LUX na integer
-
-pridat kontrolu, jak jednou padne NOK, tak nemuze byt mereni OK !!
-
-pridat text kdyz mereni freezne - nejde asi nijak zapsat do souboru - ale jde nakonec napsat text, ze dojel automaticky a nebyl ukoncen 
-
-SROVNAT FAD1 detekci presnejsiho casu 
-
-Val0 vyhodnotit nakonec kdyz se nejaka hodnota bude rovnat pocatecni Val0 tak je KONEC
-
-define this >>
-        if float(HOLD3) <= Hol3 + (Hol3 * TOLERANCE) and float(HOLD3) >= Hol3 - (Hol3 * TOLERANCE):
-            file.write("OK")
-        else:
-            file.write("NOK")
-            OK = False
-
-
 """
 DEBUG = False #If TRUE, program shows extra data in shell
 
-FADE1 = 0.7 #can't be really measured - compared if there is ~3 sec difference? (to adjust to the start up of the driver)
-HOLD1 = 300 #300 = 5 min
-LEVEL1 = 100 #can't be checked - kinda useless here, but important for clearer reading of variables
-FADE2 = 32 #32
-HOLD2 = 60 #602 even when the CORRIDOR won't stop it needs time to know how long to measure
-LEVEL2 = 30 #30%
-FADE3 = 0 #s
-HOLD3 = 0 #0s
-LEVEL3 = 0 #0%
+FADE1 = 0.7
+HOLD1 = 300
+LEVEL1 = 100
+FADE2 = 32
+HOLD2 = 600 #even when the CORRIDOR won't stop it needs time to know how long to measure
+LEVEL2 = 30
+FADE3 = 0
+HOLD3 = 0
+LEVEL3 = 0
 INFINITE = True # if TRUE > HOLD2 INDEFINITELY or HOLD3 INDEFINITELY | FALSE if exact by the times stated above
 
 TOLERANCE = 0.10 #tolerance porovnani dat 10%
 TOL_LUX = 0.02 #tolerance zmeny hodnoty v namerenych lumenech 2%
-cas_bezi = 0 #aktualni cas behem testu
+cas_bezi = 0
 
 # display update and read data time 0.1 works well for now
 update_time = 0.42
