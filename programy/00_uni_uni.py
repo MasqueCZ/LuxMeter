@@ -37,6 +37,7 @@ GRAPH turn on and turn off? Variable?
 DATA_SAVE = True
 stable_checker = 3 #values
 TIMED_END = True
+stable_tolerance = 25
 
 i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
 
@@ -188,7 +189,7 @@ test_file_name = (
     f"/mereni/{time_list[0]}-{time_list[1]}-{time_list[2]}_{time_list[4]}-{time_list[5]}-{time_list[6]}-{v}-freq{frequency}s.txt")
 file = open(test_file_name, "w")
 file.write(
-    f"Program started {time_list[4]}:{time_list[5]}:{time_list[6]} {time_list[0]}-{time_list[1]}-{time_list[2]} v{v}_freq_{frequency}s with time OFF set to {timeOFF}h" + "\n")
+    f"Program started {time_list[4]}:{time_list[5]}:{time_list[6]} {time_list[0]}-{time_list[1]}-{time_list[2]} v{v}_freq_{frequency}s with time OFF set to {timeOFF}h and {stable_tolerance} lm tolerance" + "\n")
 file.flush()
 
 # display update and read data time 0.1 works well for now
@@ -212,8 +213,11 @@ graph_max = 2
 oled.fill(0)
 
 data_saver = []
-save_data = stable_checker - 1
-waiting = False
+save_data_ph1 = stable_checker - 1
+save_data_ph2 = stable_checker - 1
+stable_phase1 = False
+stable_phase2 = False
+lx_ph1_compare = "x"
 pix_green = (0, 25, 0)
 pix_blue = (0, 0, 25)
 pix_red = (10, 0, 0)
@@ -257,26 +261,57 @@ while True:
         data_saver.append(lm)
         if len(data_saver) > stable_checker:
             data_saver.pop(0)
+
+            #Phase one STABLE checker - is it exactly the same?
             for i in range(0, stable_checker - 1):
                 if int(data_saver[i]) == lm:
-                    save_data += 1
+                    save_data_ph1 += 1
                 else:
-                    save_data = 0
-                    waiting = False
+                    save_data_ph1 = 0
+                    stable_phase1 = False
 
-        if save_data >= stable_checker:
-            if waiting == True:
+                """"
+                Dat tuhle phase2 za uroven phase1 a pokud se nespusti tak phase2 ani nekontrolovat
+                a kdyz vypadne z limitu vstupni hodnoty, tak to vyhodit mimo stable phase1/2
+                
+                pouzit lx_ph1_compare = lm ??
+                 """
+
+            #Phase two STABLE checker - is it within limit?
+            for i in range(0, stable_checker - 1):
+                if int(data_saver[i]) >= (lm - stable_tolerance) and int(data_saver[i]) <= (lm + stable_tolerance):
+                    save_data_ph2 += 1
+                else:
+                    save_data_ph2 = 0
+                    stable_phase2 = False
+
+
+
+        if save_data_ph1 >= stable_checker and save_data_ph2 >= stable_checker:
+            if stable_phase1 == True:
                 pixels.fill(pix_blue)
                 oled.text(str(lm) + " lx - STABLE", 0, 12)
                 #add data write if there was MINUTE up or HOUR up - depending on time, even though it is STABLE
             else:
-                waiting = True
+                stable_phase1 = True
+                # save exact data for PHASE1 to compare
+                lx_ph1_compare = lm
                 pixels.fill(pix_blue)
-                file.write(f"stable\n")
-
+                file.write(f"{str(counter_s)}STABLE {str(lm)}\n")
                 oled.text(str(lm) + " lx - STABLE", 0, 12)
+
+        elif save_data_ph2 >= stable_checker:
+            if stable_phase2 == True:
+                pixels.fill(pix_blue)
+                oled.text(str(lm) + " lx - stable", 0, 12)
+                # add data write if there was MINUTE up or HOUR up - depending on time, even though it is STABLE
+            else:
+                stable_phase2 = True
+                pixels.fill(pix_blue)
+                file.write(f"{str(counter_s)}stable {str(lm)}\n")
+                oled.text(str(lm) + " lx - stable", 0, 12)
         else:
-            file.write(str(counter_h) + ":" + str(counter_m) + ":" + str(counter_s) + "-" + str(lm) + "\n")
+            file.write(f"{str(counter_h)}:{str(counter_m)}:{str(counter_s)}-{str(lm)}\n")
             pixels.fill(pix_green)
 
         file.flush()
@@ -305,12 +340,13 @@ while True:
 
     #fckadoodledoo MAGIC turn off
     if TIMED_END==True and counter_h >= timeOFF:
-        file.write(str(counter_h) + ":" + str(counter_m) + ":" + str(counter_s) + "-" + str(lm) + "\n")
+        file.write((f"{str(counter_h)}:{str(counter_m)}:{str(counter_s)}-{str(lm)}\n"))
         file.write(f"Ukončeno automaticky po čase: {timeOFF} h \n")
         break
 
     utime.sleep(update_time)
 
+file.write(f"{str(counter_h)}:{str(counter_m)}:{str(counter_s)}-{str(lm)}-THE END \n")
 relay.value(1)
 LED.value(0)
 oled.fill(0)
