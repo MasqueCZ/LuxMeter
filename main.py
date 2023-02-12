@@ -47,7 +47,7 @@ pixels.show()
 def get_files():
     """ Get a list of Python files in the root folder of the Pico """
 
-    files = listdir("/programy/")
+    files = listdir("/programs/")
     menu = []
     for file in files:
         if file.endswith(".py"):
