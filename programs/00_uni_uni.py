@@ -131,7 +131,7 @@ while True:
 utime.sleep(1)
 
 
-timeOFF_list = (0, 1, 2, 4, 8, 12, 24, 9999)
+timeOFF_list = (0, 1, 2, 4, 8, 12, 24, 168)
 timeOFF = timeOFF_list[0]
 selectionOFF = 0
 
