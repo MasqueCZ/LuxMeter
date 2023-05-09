@@ -25,7 +25,7 @@ upraveno
 
 prevest LUX na integer
 
-pridat kontrolu, jak jednou padne NOK, tak nemuze byt mereni OK !!
+
 
 pridat text kdyz mereni freezne - nejde asi nijak zapsat do souboru - ale jde nakonec napsat text, ze dojel automaticky a nebyl ukoncen 
 

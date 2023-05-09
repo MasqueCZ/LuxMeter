@@ -5,7 +5,8 @@
 
 from machine import Pin, I2C
 from os import listdir
-from ssd1306 import SSD1306_I2C
+#from ssd1306 import SSD1306_I2C
+from SH1106 import SH1106_I2C
 from utime import sleep
 from BH1750 import BH1750
 from neopixel import Neopixel
@@ -26,7 +27,7 @@ list_length = 0
 total_lines = 6
 
 # create the display
-oled = SSD1306_I2C(width=width, height=height, i2c=i2c)
+oled = SH1106_I2C(width=width, height=height, i2c=i2c, rotate=180)
 oled.fill(0)
 oled.init_display()
 
@@ -34,6 +35,12 @@ oled.init_display()
 button_ok = Pin(20, Pin.IN, Pin.PULL_DOWN)
 button_up = Pin(19, Pin.IN, Pin.PULL_DOWN)
 button_do = Pin(18, Pin.IN, Pin.PULL_DOWN)
+
+# relays
+relay = Pin(21, Pin.OUT)
+relay02 = Pin(22, Pin.OUT)
+relay.value(1)
+relay02.value(1)
 
 # strip of 1 chips, state machine 0, GPIO 28(pin34), RGB mode
 n_leds = 1
@@ -96,7 +103,7 @@ def launch(filename):
     oled.text(filename, 1, 20)
     oled.show()
     sleep(0.5)
-    progloc = ("/programy/"+filename)
+    progloc = ("/programs/"+filename)
     exec(open(progloc).read())
     show_menu(file_list)
 

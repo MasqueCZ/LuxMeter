@@ -6,28 +6,25 @@ from BH1750 import BH1750
 from neopixel import Neopixel
 import DS1307, _thread, micropython
 
-version = "1.32 TREVOS - F0.7H60F32L10infinite"
+v = "2.5-13"
+version = f"{v} - 14 FIN:0.7s, RON:60s/100%, FOUT:30s, ABL:30%, SOFF:/"
 
 """
-LUX CORRIDOR meter - testovaci a vyvojovy soubor #2
+LUX CORRIDOR meter
 
 The relay waits until it gets stable reading of OFF luminaire. And then start the cycle of measurement and data-write phase.
-
-------------------------------------------
-jen pro testovani
-
 """
 DEBUG = False #If TRUE, program shows extra data in shell
 
-FADE1 = 0.7 #can't be really measured - compared if there is ~3 sec difference? (to adjust to the start up of the driver)
-HOLD1 = 60 #120
-LEVEL1 = 100 #can't be checked - kinda useless here, but important for clearer reading of variables
-FADE2 = 32 #32
-HOLD2 = 60 #602 even when the CORRIDOR won't stop it needs time to know how long to measure
-LEVEL2 = 10 #10%
-FADE3 = 0 #8s
-HOLD3 = 0 #30s
-LEVEL3 = 0 #10%
+FADE1 = 0.7
+HOLD1 = 60
+LEVEL1 = 100
+FADE2 = 30
+HOLD2 = 600 #even when the CORRIDOR won't stop it needs time to know how long to measure
+LEVEL2 = 30
+FADE3 = 0
+HOLD3 = 0
+LEVEL3 = 0
 INFINITE = True # if TRUE > HOLD2 INDEFINITELY or HOLD3 INDEFINITELY | FALSE if exact by the times stated above
 
 TOLERANCE = 0.10 #tolerance porovnani dat 10%
@@ -41,6 +38,7 @@ pix_val = 0.5 # variable for PIXELS value
 #program_end = False
 program_result = "nevyhodnocen/program ukončen předčasně"
 OK = True   # PROGRAM final verdict | False = NOK
+
 
 i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
 
@@ -68,6 +66,12 @@ pixels = Neopixel(n_leds, 0, 28, "GRB")
 button_ok = Pin(20, Pin.IN, Pin.PULL_DOWN)
 button_up = Pin(19, Pin.IN, Pin.PULL_DOWN)
 button_down = Pin(18, Pin.IN, Pin.PULL_DOWN)
+
+# relays
+relay = Pin(21, Pin.OUT)
+relay02 = Pin(22, Pin.OUT)
+relay.value(1)
+relay02.value(1)
 
 # control LED
 LED = Pin(25, Pin.OUT)
@@ -112,19 +116,17 @@ def get_seconds():
     allseconds = (counter_s + (counter_m * 60) + (counter_h * 60 * 60))
     return allseconds
 
-button_pressed = False
-
-
-def button_reader_thread():
-    global button_pressed
-
-    while True:
-        if button_ok.value() == 1:
-            button_pressed = True
-        sleep(0.05)
-
-
-_thread.start_new_thread(button_reader_thread, ())
+#button_pressed = False
+#def button_reader_thread():
+#    global button_pressed
+#
+#    while True:
+#        if button_ok.value() == 1:
+#            button_pressed = True
+#        sleep(0.05)
+#
+#
+#_thread.start_new_thread(button_reader_thread, ())
 
 # set variables for measurement and comparison
 """
@@ -175,7 +177,9 @@ lux_value = [False, False, False, False, False]
 stable_boolean = False
 
 # waiting phase
-while button_pressed == False:
+while True:
+    if button_ok.value() == 1:
+        break
     LED.toggle()
     oled.fill(0)
     lux = light.luminance(BH1750.CONT_HIRES_1)
@@ -194,13 +198,22 @@ pixels.show()
 sleep(1)
 
 # button reset
-button_pressed = False
+#button_pressed = False
 
 # measurement phase
 time_list = ds.datetime()
-test_file_name = (f"/mereni/{time_list[0]}-{time_list[1]}-{time_list[2]}_{time_list[4]}-{time_list[5]}-{time_list[6]}.txt")
+
+# corrects file name time and date to format 2022-07-05 from 2022-7-5 etc
+for i in range (0,6):
+    time_list = list(time_list)
+
+    if time_list[i] <= 9:
+        time_list[i] = (f"0{time_list[i]}")
+    time_list = tuple(time_list)
+
+test_file_name = (f"/mereni/{time_list[0]}-{time_list[1]}-{time_list[2]}_{time_list[4]}-{time_list[5]}-{time_list[6]}-{v}.txt")
 file = open(test_file_name, "w")
-file.write(f"Program started {time_list[4]}:{time_list[5]}:{time_list[6]} {time_list[0]}-{time_list[1]}-{time_list[2]}" + "\n" + f"version: v{version}" + "\n")
+file.write(f"Program started {time_list[4]}:{time_list[5]}:{time_list[6]} {time_list[0]}-{time_list[1]}-{time_list[2]}" + "\n" + f"version: v{v}-{version}" + "\n")
 file.write("\n" + f"Parameters:" + "\n" + f"Fade {FADE1}s, Hold {HOLD1}s at {LEVEL1}%" + "\n")
 file.write(f"fade {FADE2}s, hold {HOLD2}s at {LEVEL2}%" + "\n")
 file.write(f"fade {FADE3}s, hold {HOLD3}s at {LEVEL3}%" + "\n")
@@ -220,7 +233,10 @@ sec_to_measure = time_actual[2]
 
 
 
-while button_pressed == False:
+while True:
+    if button_ok.value() == 1:
+        break
+
     # LEDs to see whether it FROZE or NOT
     LED.toggle()
     pixels.fill((3*pix_val, 3*pix_val, 3*pix_val)) # WHITE
@@ -287,19 +303,23 @@ while button_pressed == False:
     stable = all(i for i in lux_value)
 
 # OPERATIVE phase
+
     if Val0 == "x" and stable == True:
         Val0 = lux
         Tim0 = get_seconds() - 0  # play with this number in real situations | 0 sec for this is where all other starts
         relay.value(0)
+        relay02.value(0)
         #sleep(0) # lets try 0 here, whether it works or dont
         stable = False  # this condition and the line above IS enough to catch the OFF ON transition, so it does not evaluate STABLE = TRUE immediately
         file.write("Measurement:" + "\n")
         file.write("Stable at: " + str(Val0) + "lx\n")
+        sleep(1)
+        relay02.value(1)
 
     if Val1 == "x" and stable == True:
         Val1 = lux
         Tim1 = get_seconds() - 5
-        if float(Val1) == 0.0:
+        if float(Val1) > 1.0:
             button_pressed = True
             program_result = "Val1 nemuze byt nula"
 
@@ -436,6 +456,7 @@ while button_pressed == False:
 
     if cas_bezi >= cas_celeho_testu:
         print("piskej KONEC KURVA!")
+
         if DEBUG == True:
             print(Per1)
             print(Per2)
@@ -446,13 +467,13 @@ while button_pressed == False:
                 Per2X = True
             if float(Per1) > 1 and Per2X == True:
                 file.write(f"OK - Světlo svítilo dál, ukončeno automaticky po definovaném čase\n")
-                OK = True
+                #OK = False
             else:
                 file.write(f"NOK - Světlo zhaslo, ukončeno zhasnutím\n")
                 OK = False
         elif INFINITE == False:
             continue
-
+        break
 
 
     if DEBUG == True:
@@ -468,9 +489,13 @@ oled.text("Program: ", 0, 0)
 if OK == True:
     oled.text("OK", 0, 24)
     program_result = "Měření OK"
+    pixels.fill((0, 80 * pix_val, 0))
+    pixels.show()
 else:
     oled.text("NOK", 0, 24)
     program_result = "Měření NOK"
+    pixels.fill((80 * pix_val, 0, 0))
+    pixels.show()
 oled.show()
 
 file.write("\n" + "Result:" + program_result + "\n")
@@ -482,18 +507,10 @@ relay.value(1) #zhasne svetlo
 LED.value(0) #zhasne kontrolni led na RPiPico
 file.close()
 
-# sets MOOD LED to NOK or OK
 # WAIT phase for button click before jumping back to the menu
 while True:
     if button_ok.value() == 1:
         break
-    if OK == True:
-        pixels.fill((0, 80*pix_val, 0))
-        pixels.show()
-    else:
-        pixels.fill((80*pix_val, 0, 0))
-        pixels.show()
-    sleep(0.1)
 
 # re-sets MOOD LED to END
 pixels.fill((0, 0, 0))

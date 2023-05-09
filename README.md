@@ -19,6 +19,10 @@ time of (0, 1, 2, 4, 8, 12, 24, 168) hours. It measures indefinitely if 0 is sel
 There is data saver feature which stops saving data after 2 same measurements the 3rd is just "stable" and it continues 
 to measure but does not take up another space unless the value changes.
 
+There is also a SSR relay that turns on the power at the start of the measurement, second relay can be turned temporarily
+by pushing buttons UP and DOWN at the same time. It can be used to re-start the corridor function cycle or jumpstart
+emergency mode.
+
 -work in process-
 
 I work on 2 level stable checker, one without a tolerance, one with tolerance but I have to polish it since it can 

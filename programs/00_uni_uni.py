@@ -42,7 +42,7 @@ stable_tolerance = 25
 i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
 
 # display
-oled = SSD1306_I2C(128, 64, i2c)
+oled = SH1106_I2C(width=width, height=height, i2c=i2c, rotate=180)
 oled.fill(0)
 
 # light meter module
@@ -51,9 +51,11 @@ light = BH1750(i2c)
 # RealTimeClock module
 ds = DS1307.DS1307(i2c)
 
-# relay
+# relays
 relay = Pin(21, Pin.OUT)
+relay02 = Pin(22, Pin.OUT)
 relay.value(1)
+relay02.value(1)
 
 # control LED
 LED = Pin(25, Pin.OUT)
@@ -223,6 +225,10 @@ pix_blue = (0, 0, 25)
 pix_red = (10, 0, 0)
 
 while True:
+    if button_up.value() == 1 and button_down.value() == 1:
+        relay02.value(0)
+    else:
+        relay02.value(1)
     relay.value(0)
     LED.toggle()
     pixels.fill(pix_red)
@@ -253,7 +259,7 @@ while True:
 
     oled.text(f"{counter_h}:{counter_m}:{counter_s} - {frequency}s", 0, 0)
     oled.text(str(lm) + " lx", 0, 12)
-    oled.rect(0, 20, 128, 44, 1)
+    oled.rect(0, 20, 128, 43, 1)
 
     # datalogger
     if counter_log == frequency or counter_log >= frequency:
@@ -297,7 +303,7 @@ while True:
                 # save exact data for PHASE1 to compare
                 lx_ph1_compare = lm
                 pixels.fill(pix_blue)
-                file.write(f"{str(counter_s)}STABLE {str(lm)}\n")
+                file.write(f"{str(counter_h)}:{str(counter_m)}:{str(counter_s)}-{str(lm)}\n")
                 oled.text(str(lm) + " lx - STABLE", 0, 12)
 
         elif save_data_ph2 >= stable_checker:
@@ -308,7 +314,7 @@ while True:
             else:
                 stable_phase2 = True
                 pixels.fill(pix_blue)
-                file.write(f"{str(counter_s)}stable {str(lm)}\n")
+                file.write(f"{str(counter_h)}:{str(counter_m)}:{str(counter_s)}-{str(lm)}\n")
                 oled.text(str(lm) + " lx - stable", 0, 12)
         else:
             file.write(f"{str(counter_h)}:{str(counter_m)}:{str(counter_s)}-{str(lm)}\n")
@@ -346,7 +352,7 @@ while True:
 
     utime.sleep(update_time)
 
-file.write(f"{str(counter_h)}:{str(counter_m)}:{str(counter_s)}-{str(lm)}-THE END \n")
+file.write(f"{str(counter_h)}:{str(counter_m)}:{str(counter_s)}-{str(lm)}\nTHE END\n")
 relay.value(1)
 LED.value(0)
 oled.fill(0)
