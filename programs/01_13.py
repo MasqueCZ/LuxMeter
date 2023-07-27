@@ -6,7 +6,7 @@ from BH1750 import BH1750
 from neopixel import Neopixel
 import DS1307, _thread, micropython
 
-v = "2.4-13"
+v = "2.5-13"
 version = f"{v} - 13 FIN:0.7s, RON:30s/100%, FOUT:32s, ABL:20%, SOFF:/"
 
 """
@@ -54,9 +54,11 @@ light = BH1750(i2c)
 # RealTimeClock module
 ds = DS1307.DS1307(i2c)
 
-# relay
+# relays
 relay = Pin(21, Pin.OUT)
+relay02 = Pin(22, Pin.OUT)
 relay.value(1)
+relay02.value(1)
 
 # strip of 1 chips, state machine 0, GPIO 28(pin34), RGB mode
 n_leds = 1
@@ -230,6 +232,7 @@ sec_to_measure = time_actual[2]
 while True:
     if button_ok.value() == 1:
         break
+
     # LEDs to see whether it FROZE or NOT
     LED.toggle()
     pixels.fill((3*pix_val, 3*pix_val, 3*pix_val)) # WHITE
@@ -296,19 +299,23 @@ while True:
     stable = all(i for i in lux_value)
 
 # OPERATIVE phase
+
     if Val0 == "x" and stable == True:
         Val0 = lux
         Tim0 = get_seconds() - 0  # play with this number in real situations | 0 sec for this is where all other starts
         relay.value(0)
+        relay02.value(0)
         #sleep(0) # lets try 0 here, whether it works or dont
         stable = False  # this condition and the line above IS enough to catch the OFF ON transition, so it does not evaluate STABLE = TRUE immediately
         file.write("Measurement:" + "\n")
         file.write("Stable at: " + str(Val0) + "lx\n")
+        sleep(1)
+        relay02.value(1)
 
     if Val1 == "x" and stable == True:
         Val1 = lux
         Tim1 = get_seconds() - 5
-        if float(Val1) == 0.0:
+        if float(Val1) > 1.0:
             button_pressed = True
             program_result = "Val1 nemuze byt nula"
 
@@ -456,7 +463,7 @@ while True:
                 Per2X = True
             if float(Per1) > 1 and Per2X == True:
                 file.write(f"OK - Světlo svítilo dál, ukončeno automaticky po definovaném čase\n")
-                OK = True
+                #OK = False
             else:
                 file.write(f"NOK - Světlo zhaslo, ukončeno zhasnutím\n")
                 OK = False

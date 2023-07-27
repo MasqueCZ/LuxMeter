@@ -1,5 +1,5 @@
-# Rotary Menu
-# Kevin McAleer
+# built on Rotary Menu
+# by Kevin McAleer
 # May 2021
 # edited by Michal Novak June 2022
 
@@ -114,28 +114,6 @@ show_menu(file_list)
 
 # Repeat forever
 while True:
-    # SOURCE CODE I COPIED below
-    #     if previous_value != step_pin.value():
-    #         if step_pin.value() == False:
-    #
-    #             # Turned Left
-    #             if direction_pin.value() == False:
-    #                 if highlight > 1:
-    #                     highlight -= 1
-    #                 else:
-    #                     if shift > 0:
-    #                         shift -= 1
-    #
-    #             # Turned Right
-    #             else:
-    #                 if highlight < total_lines:
-    #                     highlight += 1
-    #                 else:
-    #                     if shift+total_lines < list_length:
-    #                         shift += 1
-    #
-    #             show_menu(file_list)
-    #         previous_value = step_pin.value()
     if button_up.value() == True:
         if highlight > 1:
             highlight -= 1

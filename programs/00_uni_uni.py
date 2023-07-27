@@ -1,6 +1,6 @@
 from machine import Pin, I2C
 from BH1750 import BH1750
-from ssd1306 import SSD1306_I2C
+from SH1106 import SH1106_I2C
 from neopixel import Neopixel
 import DS1307
 import utime
@@ -10,26 +10,28 @@ v = "1.02 uni"
 LUX meter
 
 UNIVERSAL measurement - writes data every X sec!! (1, 5, 10, 30, 60, 600, 3600)
-může mít nastavený čas, po kterém má program automaticky vypnout - teď nastaveno na 7 HODIN !!
-Pokud je x(3) měření po sobě stejných, tak šetří data a zapíše jen "stable" - zkrátit
-Na displeji je graf z posledních 30 hodnot
+You can set timed OFF of measurement after "never", 1, 2, 4, 8, 12, 24 or 168 hours. 
 
-řízeno >>
-DATA_SAVE a TIMED_END
+There is a graph of last 30 values on the display
 
-RELAY - zapne po zapnutí měření
-kontrolní LED - bliká při čtení aktuální hodnoty
+RELAY - Turns on at the start of the measurement
+RELAY02 - push UP+DOWN to turn on momentarily
+LED blinks while reading value - green while value changes, blue if it is considered the light source a stable one
 Display(i2c) 128x64
 RTC module
-3x tlačítka START/STOP, UP, DOWN
+3x buttons START/STOP, UP, DOWN
 1x reset
 + GRAPH of 30 last values
 
-
-Přidat verzi: program name: uni-cycle? Pun intended.
+Přidat verzi: program name: uni-cycle? Pun intended. Or add it at choosing the times of OFF timer.
 Nastavit délku doby měření (ON-stykače) v hodinách, když 0, tak bez limitu a ostatní nastavování přeskočit.
 Nastavit délku doby měření v (OFF-stykače) v hodinách, měření stále bude zapisovat
 Nastavit počet cyklů. 
+
+Add version with timer that counts up the time and gives data-over time and shows TIME UP after end of testing
+EMERGENCY - how long battery lasts. Possibly when the lumen drop below 5% of what it was?
+
+rework the time tokens, to consider RTC unit and compare real-time to frequency, not as a tokens.
 
 GRAPH turn on and turn off? Variable?
 """
@@ -38,10 +40,14 @@ DATA_SAVE = True
 stable_checker = 3 #values
 TIMED_END = True
 stable_tolerance = 25
+#turns L3 5 times ON and OFF in 2.5 seconds
+reset_corridor = False
 
 i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
 
 # display
+width = 128
+height = 64
 oled = SH1106_I2C(width=width, height=height, i2c=i2c, rotate=180)
 oled.fill(0)
 
@@ -224,11 +230,23 @@ pix_green = (0, 25, 0)
 pix_blue = (0, 0, 25)
 pix_red = (10, 0, 0)
 
+#JUST TO RESET CORRIDOR
+while reset_corridor == True:
+    relay.value(0)
+    utime.sleep(2)
+    for i in range(10):
+        relay02.toggle()
+        utime.sleep(0.25)
+    break
+
+#MEASUREMENT PHASE
 while True:
+
     if button_up.value() == 1 and button_down.value() == 1:
         relay02.value(0)
     else:
         relay02.value(1)
+
     relay.value(0)
     LED.toggle()
     pixels.fill(pix_red)
@@ -263,6 +281,9 @@ while True:
 
     # datalogger
     if counter_log == frequency or counter_log >= frequency:
+
+        if relay02.value() == 0:
+            file.write(f"{str(counter_h)}:{str(counter_m)}:{str(counter_s)}-temp. L3 - ON \n")
 
         data_saver.append(lm)
         if len(data_saver) > stable_checker:

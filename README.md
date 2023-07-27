@@ -4,7 +4,7 @@ microPython - RPiPico LuxMeter with RTC and SSR relay
 My first project, be gentle with comments, but I am open to improvements.
 
 
-Main part of the project was to measure lumen data over time, save them and then use excel to analyze the result.
+Main part of the project was to measure lumen data over time, save them and then use spreadsheets to analyze the result.
 But as clever workers are expensive, I was forced to make different programs, which are tailor made just for one type of 
 luminaire and at the end of the measurement, you have result in GREEN or RED light and small text file with important 
 milestones of corridor function. (for more detailed info about corridor function see blueprints/scheme.jpg)
@@ -21,13 +21,17 @@ to measure but does not take up another space unless the value changes.
 
 There is also a SSR relay that turns on the power at the start of the measurement, second relay can be turned temporarily
 by pushing buttons UP and DOWN at the same time. It can be used to re-start the corridor function cycle or jumpstart
-emergency mode.
+emergency mode, etc.
 
--work in process-
+-work in progress-
 
-I work on 2 level stable checker, one without a tolerance, one with tolerance but I have to polish it since it can 
-slowly slide out of tolerance, without the program realising, since it is so slow changes, that they would be then 
+1 - I work on 2 level stable checker, one without a tolerance, one with tolerance but I have to polish it since it can 
+slowly slide out of tolerance, without the program realising, since it is so slow, changes, that they would be then 
 seen as STABLE.
 
-I want to add data write, even if stable and within the tolerance to save data at least once a minute or once a hour 
+2 - I want to add data write, even if stable and within the tolerance to save data at least once a minute or once a hour 
 or a day, if the sampling is lower.
+
+3 - Keep all notes in English and translate and then delete czech notes and comments
+
+4 - add microphone and measurement for pre-set luminaire of LINEAR 100s fade and measurement of noise produced by driver? 
