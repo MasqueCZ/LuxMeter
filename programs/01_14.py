@@ -473,7 +473,6 @@ if Val0 == "x" or Val1 == "x" or Val2 == "x":
     OK = False
 
 oled.fill(0)
-oled.text("Program: ", 0, 0)
 if OK == True:
     oled.text("OK", 0, 24)
     program_result = "Měření OK"
