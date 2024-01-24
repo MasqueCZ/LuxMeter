@@ -1,12 +1,12 @@
 from machine import Pin, I2C
 from os import listdir
-from ssd1306 import SSD1306_I2C
+from SH1106 import SH1106_I2C
 from utime import sleep
 from BH1750 import BH1750
 from neopixel import Neopixel
 import DS1307, _thread, micropython
 
-v = "2.4-05"
+v = "2.6-05"
 version = f"{v} - 05 FIN:0.7s, RON:120s/100%, FOUT:30s, ABL:10%, SOFF:/"
 
 """
@@ -45,7 +45,7 @@ i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
 # display
 width = 128
 height = 64
-oled = SSD1306_I2C(width=width, height=height, i2c=i2c)
+oled = SH1106_I2C(width=width, height=height, i2c=i2c, rotate=180)
 oled.fill(0)
 
 # light meter module
@@ -54,9 +54,11 @@ light = BH1750(i2c)
 # RealTimeClock module
 ds = DS1307.DS1307(i2c)
 
-# relay
+# relays
 relay = Pin(21, Pin.OUT)
+relay02 = Pin(22, Pin.OUT)
 relay.value(1)
+relay02.value(1)
 
 # strip of 1 chips, state machine 0, GPIO 28(pin34), RGB mode
 n_leds = 1
@@ -109,18 +111,6 @@ if DEBUG == True:
 def get_seconds():
     allseconds = (counter_s + (counter_m * 60) + (counter_h * 60 * 60))
     return allseconds
-
-#button_pressed = False
-#def button_reader_thread():
-#    global button_pressed
-#
-#    while True:
-#        if button_ok.value() == 1:
-#            button_pressed = True
-#        sleep(0.05)
-#
-#
-#_thread.start_new_thread(button_reader_thread, ())
 
 # set variables for measurement and comparison
 """
@@ -191,9 +181,6 @@ pixels.show()
 
 sleep(1)
 
-# button reset
-#button_pressed = False
-
 # measurement phase
 time_list = ds.datetime()
 
@@ -229,7 +216,9 @@ sec_to_measure = time_actual[2]
 
 while True:
     if button_ok.value() == 1:
+        file.write("Shut down by BUTTON press" + "\n")
         break
+
     # LEDs to see whether it FROZE or NOT
     LED.toggle()
     pixels.fill((3*pix_val, 3*pix_val, 3*pix_val)) # WHITE
@@ -296,21 +285,27 @@ while True:
     stable = all(i for i in lux_value)
 
 # OPERATIVE phase
+
     if Val0 == "x" and stable == True:
         Val0 = lux
         Tim0 = get_seconds() - 0  # play with this number in real situations | 0 sec for this is where all other starts
         relay.value(0)
+        relay02.value(0)
         #sleep(0) # lets try 0 here, whether it works or dont
         stable = False  # this condition and the line above IS enough to catch the OFF ON transition, so it does not evaluate STABLE = TRUE immediately
         file.write("Measurement:" + "\n")
         file.write("Stable at: " + str(Val0) + "lx\n")
+        sleep(1)
+        relay02.value(1)
 
     if Val1 == "x" and stable == True:
         Val1 = lux
         Tim1 = get_seconds() - 5
-        if float(Val1) == 0.0:
-            button_pressed = True
+        if float(Val1) < 1.0:
+            #button_pressed = True
             program_result = "Val1 nemuze byt nula"
+            file.write("Val1 nemuze byt nula" + "\n")
+            break
 
         phase = "Operative:"
         phase2 = "Tim 1 - HOLD"
@@ -354,16 +349,18 @@ while True:
         Per1 = round((float(Val2) / float(Val1)) * 100, 1)
 
         if float(Val2) == 0.0:
-            button_pressed = True #ENDS CYCLE
+            #button_pressed = True #ENDS CYCLE
             program_result = "END at Tim3, Val2 = 0"
             if LEVEL2 == 0.0:
 #                OK = True
                 file.write(f"OK - Val2: {str(Val2)} equals {str(LEVEL2)}\n")
+            break
         elif float(FADE2) <= Fad2 + (Fad2 * TOLERANCE) and float(FADE2) >= Fad2 - (Fad2 * TOLERANCE):
             file.write("OK")
         else:
             file.write("NOK")
             OK = False
+            break
 
         file.write(" - Fade time 2: " + str(Fad2) + "s\n")
 
@@ -434,7 +431,8 @@ while True:
         file.write("- hold time 3: " + str(Hol3) + "s at value: " + str(Val3) + "lx " + "\n")
         file.write("Final lx value: " + str(Val4) + "\n")
         file.flush()
-        button_pressed = True
+        #button_pressed = True
+        break
 
     #AUTOMATIC END if measuring too long TIME+10%
     cas_bezi = float(get_seconds())
@@ -447,21 +445,18 @@ while True:
         print("piskej KONEC KURVA!")
 
         if DEBUG == True:
-            print(Per1)
-            print(Per2)
+            print(f"Per1 {Per1}")
+            print(f"Per2 {Per2}")
 
-        button_pressed = True
         if INFINITE == True:
             if Per2 == "x" or Per2 > 1:
                 Per2X = True
             if float(Per1) > 1 and Per2X == True:
                 file.write(f"OK - Světlo svítilo dál, ukončeno automaticky po definovaném čase\n")
-                OK = True
+                #OK = False
             else:
                 file.write(f"NOK - Světlo zhaslo, ukončeno zhasnutím\n")
                 OK = False
-        elif INFINITE == False:
-            continue
         break
 
 
@@ -473,8 +468,10 @@ while True:
     sleep(update_time)
 
 """Result comparison"""
+if Val0 == "x" or Val1 == "x" or Val2 == "x":
+    OK = False
+
 oled.fill(0)
-oled.text("Program: ", 0, 0)
 if OK == True:
     oled.text("OK", 0, 24)
     program_result = "Měření OK"
@@ -489,11 +486,9 @@ oled.show()
 
 file.write("\n" + "Result:" + program_result + "\n")
 
-#porovnani vsech dat a vyhodnocovani OK ci NOK do listu, pokud celi list OK, tak OK test, else NOK
-#nebo jedna promenna, ktera je 0 a pokud program vyhodnoti NOK tak da +1
-
-relay.value(1) #zhasne svetlo
-LED.value(0) #zhasne kontrolni led na RPiPico
+relay.value(1) #shuts off luminaire
+relay02.value(1) #shuts off phase from Relay02
+LED.value(0) #shuts off control LED on RPiPico
 file.close()
 
 # WAIT phase for button click before jumping back to the menu

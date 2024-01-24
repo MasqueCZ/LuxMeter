@@ -13,8 +13,8 @@ But as universal measurement was the main pillar of the project, it is updated t
 programs under name 00_uni_uni.py.
 
 # uni_uni
-You can select sampling time from values (1, 5, 10, 30, 60, 600, 3600) seconds and the measurement can end at selected 
-time of (0, 1, 2, 4, 8, 12, 24, 168) hours. It measures indefinitely if 0 is selected.
+You can select sampling time from values 1, 5, 10, 30, 60, 600 and 3600 seconds and the measurement can end at selected 
+time of 0, 1, 2, 4, 8, 12, 24, 168 hours. It measures indefinitely if 0 is selected.
 
 There is data saver feature which stops saving data after 2 same measurements the 3rd is just "stable" and it continues 
 to measure but does not take up another space unless the value changes.

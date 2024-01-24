@@ -6,7 +6,7 @@ from BH1750 import BH1750
 from neopixel import Neopixel
 import DS1307, _thread, micropython
 
-v = "2.5-01"
+v = "2.6-01"
 version = f"{v} - 01 FIN:0.7s, RON:120s/100%, FOUT:32s, ABL:10%, SOFF:/"
 
 """
@@ -173,11 +173,12 @@ while True:
     oled.text("Delka testu:", 0, 36)
     oled.text(celkovy_cas_rezerva, 0, 48)
     oled.show()
-    sleep(0.1)
+    sleep(0.18)
 
 # sets MOOD LED to MEASUREMENT STARTS
 pixels.fill((0, 0, 15*pix_val)) # BLUE
 pixels.show()
+
 sleep(1)
 
 # measurement phase
@@ -211,15 +212,17 @@ time_actual = [time_list[4], time_list[5], time_list[6]]
 
 sec_to_measure = time_actual[2]
 
+
+
 while True:
+    if button_ok.value() == 1:
+        file.write("Shut down by BUTTON press" + "\n")
+        break
+
     # LEDs to see whether it FROZE or NOT
     LED.toggle()
     pixels.fill((3*pix_val, 3*pix_val, 3*pix_val)) # WHITE
     pixels.show()
-
-    if button_ok.value() == 1:
-        file.write("Shut down by BUTTON press" + "\n")
-        break
 
     # updates time list
     time_list = ds.datetime()
@@ -287,21 +290,21 @@ while True:
         Val0 = lux
         Tim0 = get_seconds() - 0  # play with this number in real situations | 0 sec for this is where all other starts
         relay.value(0)
-        sleep(2)
         relay02.value(0)
         #sleep(0) # lets try 0 here, whether it works or dont
         stable = False  # this condition and the line above IS enough to catch the OFF ON transition, so it does not evaluate STABLE = TRUE immediately
         file.write("Measurement:" + "\n")
         file.write("Stable at: " + str(Val0) + "lx\n")
-        sleep(5)
+        sleep(1)
         relay02.value(1)
 
     if Val1 == "x" and stable == True:
         Val1 = lux
-        Tim1 = get_seconds() - 7
+        Tim1 = get_seconds() - 5
         if float(Val1) < 1.0:
             #button_pressed = True
             program_result = "Val1 nemuze byt nula"
+            file.write("Val1 nemuze byt nula" + "\n")
             break
 
         phase = "Operative:"
@@ -361,7 +364,7 @@ while True:
 
         file.write(" - Fade time 2: " + str(Fad2) + "s\n")
 
-        if float(LEVEL2) <= Per1 + (Per1 * (TOLERANCE)) and float(LEVEL2) >= Per1 - (Per1 * (2 * TOLERANCE)):
+        if float(LEVEL2) <= Per1 + (Per1 * TOLERANCE) and float(LEVEL2) >= Per1 - (Per1 * TOLERANCE):
             file.write("OK")
         else:
             file.write("NOK")
@@ -404,7 +407,7 @@ while True:
 
         file.write("- fade time 3: " + str(Fad3) + "s\n")
 
-        if float(LEVEL3) <= Per2 + (Per2 * (TOLERANCE)) and float(LEVEL3) >= Per2 - (Per2 * (2 * TOLERANCE)):
+        if float(LEVEL3) <= Per2 + (Per2 * TOLERANCE) and float(LEVEL3) >= Per2 - (Per2 * TOLERANCE):
             file.write("OK")
         else:
             file.write("NOK")
@@ -454,8 +457,6 @@ while True:
             else:
                 file.write(f"NOK - Světlo zhaslo, ukončeno zhasnutím\n")
                 OK = False
-        elif INFINITE == False:
-            continue
         break
 
 
@@ -467,29 +468,20 @@ while True:
     sleep(update_time)
 
 """Result comparison"""
-#if Val0 == "x" or Val1 == "x" or Val2 == "x":
-#    OK = False
+if Val0 == "x" or Val1 == "x" or Val2 == "x":
+    OK = False
 
 oled.fill(0)
 if OK == True:
-    oled.text("OK", 0, 0)
+    oled.text("OK", 0, 24)
     program_result = "Měření OK"
     pixels.fill((0, 80 * pix_val, 0))
     pixels.show()
 else:
-    oled.text("NOK", 0, 0)
+    oled.text("NOK", 0, 24)
     program_result = "Měření NOK"
     pixels.fill((80 * pix_val, 0, 0))
     pixels.show()
-
-# DISPLAY update
-oled.text(f"H1:{Hol1}/{HOLD1}s", 40, 0)
-oled.text(f"F2:{Fad2}/{FADE2}s {Per1}%", 0, 12)
-oled.text(f"H2:{Hol2}/{HOLD2}s", 0, 24)
-oled.text(f"F3:{Fad3}/{FADE3}s {Per2}%", 0, 36)
-oled.text(f"H3:{Hol3}/{HOLD3}s", 0, 48)
-oled.show()
-
 oled.show()
 
 file.write("\n" + "Result:" + program_result + "\n")

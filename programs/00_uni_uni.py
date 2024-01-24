@@ -32,6 +32,7 @@ Add version with timer that counts up the time and gives data-over time and show
 EMERGENCY - how long battery lasts. Possibly when the lumen drop below 5% of what it was?
 
 rework the time tokens, to consider RTC unit and compare real-time to frequency, not as a tokens.
+rework time with W module - so it can grab actual time of internet
 
 GRAPH turn on and turn off? Variable?
 """

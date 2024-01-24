@@ -5,7 +5,6 @@
 
 from machine import Pin, I2C
 from os import listdir
-#from ssd1306 import SSD1306_I2C
 from SH1106 import SH1106_I2C
 from utime import sleep
 from BH1750 import BH1750

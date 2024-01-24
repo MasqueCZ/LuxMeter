@@ -6,7 +6,7 @@ from BH1750 import BH1750
 from neopixel import Neopixel
 import DS1307, _thread, micropython
 
-v = "2.5-14"
+v = "2.6-14"
 version = f"{v} - 14 FIN:0.7s, RON:60s/100%, FOUT:30s, ABL:30%, SOFF:/"
 
 """
@@ -301,9 +301,10 @@ while True:
     if Val1 == "x" and stable == True:
         Val1 = lux
         Tim1 = get_seconds() - 5
-        if float(Val1) > 1.0:
+        if float(Val1) < 1.0:
             #button_pressed = True
             program_result = "Val1 nemuze byt nula"
+            file.write("Val1 nemuze byt nula" + "\n")
             break
 
         phase = "Operative:"
@@ -456,8 +457,6 @@ while True:
             else:
                 file.write(f"NOK - Světlo zhaslo, ukončeno zhasnutím\n")
                 OK = False
-        elif INFINITE == False:
-            continue
         break
 
 
