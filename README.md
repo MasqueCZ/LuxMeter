@@ -4,7 +4,7 @@ microPython - RPiPico LuxMeter with RTC and SSR relay
 My first project, be gentle with comments, but I am open to improvements.
 
 
-Main part of the project was to measure lumen data over time, save them and then use spreadsheets to analyze the result.
+Main part of the project was to measure lumen(light) data over time, save them and then use spreadsheets to analyze the result.
 But as clever workers are expensive, I was forced to make different programs, which are tailor made just for one type of 
 luminaire and at the end of the measurement, you have result in GREEN or RED light and small text file with important 
 milestones of corridor function. (for more detailed info about corridor function see blueprints/scheme.jpg)
@@ -14,14 +14,14 @@ programs under name 00_uni_uni.py.
 
 # uni_uni
 You can select sampling time from values 1, 5, 10, 30, 60, 600 and 3600 seconds and the measurement can end at selected 
-time of 0, 1, 2, 4, 8, 12, 24, 168 hours. It measures indefinitely if 0 is selected.
+time of 0, 1, 2, 4, 8, 12, 24, 168 hours. It measures indefinitely if zero is selected.
 
 There is data saver feature which stops saving data after 2 same measurements the 3rd is just "stable" and it continues 
 to measure but does not take up another space unless the value changes.
 
 There is also a SSR relay that turns on the power at the start of the measurement, second relay can be turned temporarily
 by pushing buttons UP and DOWN at the same time. It can be used to re-start the corridor function cycle or jumpstart
-emergency mode, etc.
+emergency mode for certain luminaires, etc.
 
 -work in progress-
 
@@ -30,7 +30,8 @@ slowly slide out of tolerance, without the program realising, since it is so slo
 seen as STABLE.
 
 2 - I want to add data write, even if stable and within the tolerance to save data at least once a minute or once a hour 
-or a day, if the sampling is lower.
+or a day, if the sampling is lower, then battery dying or power outage could ruin measurement,
+even though it already measured for certain time, but the value never changed it is not written to the file, then you never know when it actually stopped.
 
 3 - Keep all notes in English and translate and then delete czech notes and comments
 
