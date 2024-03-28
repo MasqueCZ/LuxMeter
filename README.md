@@ -35,4 +35,6 @@ even though it already measured for certain time, but the value never changed it
 
 3 - Keep all notes in English and translate and then delete czech notes and comments
 
-4 - add microphone and measurement for pre-set luminaire of LINEAR 100s fade and measurement of noise produced by driver? 
+4 - add magnetic sensor to enter special mode?
+
+5 - menu, while choosing a program, if continuous push of a button scroll faster? Jump by 2, 5 or faster?
