@@ -26,7 +26,7 @@ list_length = 0
 total_lines = 6
 
 # create the display
-oled = SH1106_I2C(width=width, height=height, i2c=i2c, rotate=180)
+oled = SH1106_I2C(width=width, height=height, i2c=i2c, rotate=0)
 oled.fill(0)
 oled.init_display()
 

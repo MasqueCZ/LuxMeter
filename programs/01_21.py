@@ -6,7 +6,7 @@ from BH1750 import BH1750
 from neopixel import Neopixel
 import DS1307, _thread, micropython
 
-program = "18"
+program = "21"
 v = "2.62"
 version = f" - FIN:0.7s, RON:120s/100%, FOUT:32s, ABL:15%, SOFF:/"
 
@@ -18,11 +18,11 @@ The relay waits until it gets stable reading of OFF luminaire. And then start th
 DEBUG = False #If TRUE, program shows extra data in shell
 
 FADE1 = 0.7
-HOLD1 = 120
+HOLD1 = 180
 LEVEL1 = 100
 FADE2 = 32
 HOLD2 = 600 #even when the CORRIDOR won't stop it needs time to know how long to measure
-LEVEL2 = 15
+LEVEL2 = 10
 FADE3 = 0
 HOLD3 = 0
 LEVEL3 = 0
@@ -46,7 +46,7 @@ i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
 # display
 width = 128
 height = 64
-oled = SH1106_I2C(width=width, height=height, i2c=i2c, rotate=180) #rotate used to be 180, now testing 0
+oled = SH1106_I2C(width=width, height=height, i2c=i2c, rotate=180)
 oled.fill(0)
 
 # light meter module
