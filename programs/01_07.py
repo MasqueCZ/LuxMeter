@@ -6,8 +6,9 @@ from BH1750 import BH1750
 from neopixel import Neopixel
 import DS1307, _thread, micropython
 
-v = "2.6-07"
-version = f"{v} - 07 FIN:0.7s, RON:0s/100%, FOUT:180s, ABL:20%, SOFF:1200s"
+program = "7"
+v = "2.62"
+version = f" - FIN:0.7s, RON:120s/100%, FOUT:32s, ABL:15%, SOFF:/"
 
 """
 LUX CORRIDOR meter
@@ -33,7 +34,7 @@ cas_bezi = 0
 
 # display update and read data time 0.1 works well for now
 update_time = 0.42
-pix_val = 0.5 # variable for PIXELS value
+pix_val = 0.5 # variable for PIXELS value - set between 0.35 - 3
 
 #program_end = False
 program_result = "nevyhodnocen/program ukončen předčasně"
@@ -45,7 +46,7 @@ i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
 # display
 width = 128
 height = 64
-oled = SH1106_I2C(width=width, height=height, i2c=i2c, rotate=180)
+oled = SH1106_I2C(width=width, height=height, i2c=i2c, rotate=180) #rotate used to be 180, now testing 0
 oled.fill(0)
 
 # light meter module
@@ -84,9 +85,13 @@ pixels.show()
 # now = (2022, 5, 30, 1, 8, 57, 30, 0)
 # ds.datetime(now)
 
+time_reserve = 1
+
 if INFINITE == True:
-    trvani_s_rezervou = (5 + FADE1 + HOLD1 + FADE2 + HOLD2 + FADE3 + HOLD3) * 1.15
+    time_reserve = 1.15
+    trvani_s_rezervou = (5 + FADE1 + HOLD1 + FADE2 + HOLD2 + FADE3 + HOLD3) * time_reserve
 else:
+    time_reserve = 1.08
     trvani_s_rezervou = (5 + FADE1 + HOLD1 + FADE2 + HOLD2 + FADE3 + HOLD3) * 1.08
 
 if DEBUG == True:
@@ -192,17 +197,17 @@ for i in range (0,6):
         time_list[i] = (f"0{time_list[i]}")
     time_list = tuple(time_list)
 
-test_file_name = (f"/mereni/{time_list[0]}-{time_list[1]}-{time_list[2]}_{time_list[4]}-{time_list[5]}-{time_list[6]}-{v}.txt")
+test_file_name = (f"/mereni/{time_list[0]}-{time_list[1]}-{time_list[2]}_{time_list[4]}-{time_list[5]}-{time_list[6]}-{program}-{v}.txt")
 file = open(test_file_name, "w")
-file.write(f"Program started {time_list[4]}:{time_list[5]}:{time_list[6]} {time_list[0]}-{time_list[1]}-{time_list[2]}" + "\n" + f"version: v{v}-{version}" + "\n")
+file.write(f"Program {program} started {time_list[4]}:{time_list[5]}:{time_list[6]} {time_list[0]}-{time_list[1]}-{time_list[2]}" + "\n" + f"version: v{v}-{version}" + "\n")
 file.write("\n" + f"Parameters:" + "\n" + f"Fade {FADE1}s, Hold {HOLD1}s at {LEVEL1}%" + "\n")
 file.write(f"fade {FADE2}s, hold {HOLD2}s at {LEVEL2}%" + "\n")
 file.write(f"fade {FADE3}s, hold {HOLD3}s at {LEVEL3}%" + "\n")
 
 if INFINITE == True:
-    file.write(f"Driver nikdy nevypíná úplně do 0% ale měří jen: {celkovy_cas_rezerva}" + "\n")
+    file.write(f"Driver shuts down to 0% but measurement runs for: {celkovy_cas_rezerva}" + "\n")
 elif INFINITE == False:
-    file.write(f"Driver vypíná do 0% a měří: {celkovy_cas_rezerva}" + "\n")
+    file.write(f"Driver shuts down to 0% and measures: {celkovy_cas_rezerva}" + "\n")
 file.write("\n")
 file.flush()
 
@@ -284,18 +289,18 @@ while True:
             print(f"{lux_value} lux_value")
     stable = all(i for i in lux_value)
 
-# OPERATIVE phase
+# OPERATIVE phase - for better imagining of the process check /blueprints/scheme.jpg
 
     if Val0 == "x" and stable == True:
+        relay.value(0)
+        sleep(5)
+        relay02.value(0)
+        sleep(2)
         Val0 = lux
         Tim0 = get_seconds() - 0  # play with this number in real situations | 0 sec for this is where all other starts
-        relay.value(0)
-        relay02.value(0)
-        #sleep(0) # lets try 0 here, whether it works or dont
         stable = False  # this condition and the line above IS enough to catch the OFF ON transition, so it does not evaluate STABLE = TRUE immediately
         file.write("Measurement:" + "\n")
         file.write("Stable at: " + str(Val0) + "lx\n")
-        sleep(1)
         relay02.value(1)
 
     if Val1 == "x" and stable == True:
@@ -364,8 +369,10 @@ while True:
 
         file.write(" - Fade time 2: " + str(Fad2) + "s\n")
 
-        if float(LEVEL2) <= Per1 + (Per1 * TOLERANCE) and float(LEVEL2) >= Per1 - (Per1 * TOLERANCE):
+        if float(LEVEL2) <= Per1 + (Per1 * (1 * TOLERANCE)) and float(LEVEL2) >= Per1 - (Per1 * (2 * TOLERANCE)):
             file.write("OK")
+        elif float(LEVEL2) >= Per1 - (Per1 * (4 * TOLERANCE)):
+            file.write("OKish")
         else:
             file.write("NOK")
             OK = False
@@ -379,7 +386,16 @@ while True:
         phase = "StandBy 2:"
         phase2 = "Tim 4 - FADE"
         Hol2 = Tim4 - Tim3
-
+        if float(HOLD2) <= Hol2 + (Hol2 * TOLERANCE) and float(HOLD2) >= Hol2 - (Hol2 * TOLERANCE):
+            file.write("OK")
+        else:
+            file.write("NOK")
+            OK = False
+    elif Tim3 != "x" and Tim4 == "x" and get_seconds() >= (FADE1 + HOLD1 + FADE2 + HOLD2) and INFINITE == True:
+        Tim4 = get_seconds()
+        phase = "StandBy 2:"
+        phase2 ="End is near"
+        Hol2 = Tim4 - Tim3
         if float(HOLD2) <= Hol2 + (Hol2 * TOLERANCE) and float(HOLD2) >= Hol2 - (Hol2 * TOLERANCE):
             file.write("OK")
         else:
@@ -389,7 +405,8 @@ while True:
         file.write(" - hold time 2: " + str(Hol2) + "s at value: " + str(Val2) + "lx " + "at " + str(Per1) + "%" + "\n")
         file.flush()
 
-    if Tim4 != "x" and Tim5 == "x" and stable == True:
+
+    if Tim4 != "x" and Tim5 == "x" and stable == True and INFINITE == False:
         Val3 = lux
         Tim5 = get_seconds()
         Tim5 -= 5
@@ -453,7 +470,6 @@ while True:
                 Per2X = True
             if float(Per1) > 1 and Per2X == True:
                 file.write(f"OK - Světlo svítilo dál, ukončeno automaticky po definovaném čase\n")
-                #OK = False
             else:
                 file.write(f"NOK - Světlo zhaslo, ukončeno zhasnutím\n")
                 OK = False
@@ -473,18 +489,18 @@ if Val0 == "x" or Val1 == "x" or Val2 == "x":
 
 oled.fill(0)
 if OK == True:
-    oled.text("OK", 0, 24)
-    program_result = "Měření OK"
+    oled.text("- OK -", 0, 24)
+    program_result = "OK"
     pixels.fill((0, 80 * pix_val, 0))
     pixels.show()
 else:
-    oled.text("NOK", 0, 24)
-    program_result = "Měření NOK"
+    oled.text("! - NOK - !", 0, 24)
+    program_result = "NOK"
     pixels.fill((80 * pix_val, 0, 0))
     pixels.show()
 oled.show()
 
-file.write("\n" + "Result:" + program_result + "\n")
+file.write("\n" + "Result:" + "Measurement " + program_result + "\n")
 
 relay.value(1) #shuts off luminaire
 relay02.value(1) #shuts off phase from Relay02
@@ -495,6 +511,16 @@ file.close()
 while True:
     if button_ok.value() == 1:
         break
+    if button_up.value() == 1 and button_down.value() == 1:
+        oled.fill(0)
+        oled.text(f"{program}-v{v} - {program_result}", 0, 0)
+        oled.text(f"{Val1} lm", 0, 9)
+        oled.text(f"{Hol1}/{HOLD1} hold", 0, 18)
+        oled.text(f"{Fad2}/{FADE2} fade", 0, 27)
+        oled.text(f"{Per1}/{LEVEL2} %", 0, 36)
+        oled.text(f"{Hol2}/{HOLD2} hold", 0, 45)
+        oled.text(f"", 0, 54)
+        oled.show()
 
 # re-sets MOOD LED to END
 pixels.fill((0, 0, 0))

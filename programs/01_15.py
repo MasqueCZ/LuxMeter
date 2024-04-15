@@ -293,9 +293,9 @@ while True:
 
     if Val0 == "x" and stable == True:
         relay.value(0)
-        sleep(2)
+        sleep(5)
         relay02.value(0)
-        sleep(1)
+        sleep(2)
         Val0 = lux
         Tim0 = get_seconds() - 0  # play with this number in real situations | 0 sec for this is where all other starts
         stable = False  # this condition and the line above IS enough to catch the OFF ON transition, so it does not evaluate STABLE = TRUE immediately
