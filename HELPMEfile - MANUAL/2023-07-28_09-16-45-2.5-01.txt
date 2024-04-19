@@ -1,0 +1,18 @@
+Program started 09:16:45 2023-07-28
+version: v2.5-01-2.5-01 - 01 FIN:0.7s, RON:120s/100%, FOUT:32s, ABL:10%, SOFF:/
+
+Parameters:
+Fade 0.7s, Hold 120s at 100%
+fade 32s, hold 60s at 10%
+fade 0s, hold 0s at 0%
+Driver nikdy nevypíná úplně do 0% ale měří jen: 00:04:10
+
+Measurement:
+Stable at: 0.0lx
+OK - Fade time 1: -1s
+OK - Hold time 1: 122s at value: 13940.0lx (100%)
+OK - Fade time 2: 31s
+OK - level 2: 12.3%
+OK - Světlo svítilo dál, ukončeno automaticky po definovaném čase
+
+Result:Měření OK
