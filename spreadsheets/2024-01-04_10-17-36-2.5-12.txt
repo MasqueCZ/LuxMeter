@@ -1,0 +1,21 @@
+Program started 10:17:36 2024-01-04
+version: v2.5-12-2.5-12 - 12 FIN:0.7s, RON:270s/100%, FOUT:32s, ABL:10%, SOFF:600s
+
+Parameters:
+Fade 0.7s, Hold 270s at 100%
+fade 32s, hold 600s at 10%
+fade 0s, hold 0s at 0%
+Driver vypíná do 0% a měří: 00:16:20
+
+Measurement:
+Stable at: 0.0lx
+OK - Fade time 1: 1s
+OK - Hold time 1: 270s at value: 2918.3lx (100%)
+OK - Fade time 2: 30s
+OK - level 2: 10.4%
+OK - hold time 2: 600s at value: 302.5lx at 10.4%
+OK- fade time 3: 0s
+OK- to level 3: 0.0%
+Shut down by BUTTON press
+
+Result:Měření OK
