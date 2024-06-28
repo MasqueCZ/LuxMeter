@@ -5,10 +5,12 @@ from utime import sleep
 from BH1750 import BH1750
 from neopixel import Neopixel
 import DS1307, _thread, micropython
+import config
 
-program = "20"
+program = "27"
 v = "2.62"
-version = f" - FIN:0.7s, RON:180s/100%, FOUT:32s, ABL:10%, SOFF:120"
+version = f" - FIN:0.7s, RON:120s/100%, FOUT:32s, ABL:0%, SOFF:/"
+print(f"box c.: {config.box_version}")
 
 """
 LUX CORRIDOR meter
@@ -18,15 +20,15 @@ The relay waits until it gets stable reading of OFF luminaire. And then start th
 DEBUG = False #If TRUE, program shows extra data in shell
 
 FADE1 = 0.7
-HOLD1 = 180
+HOLD1 = 120
 LEVEL1 = 100
 FADE2 = 32
-HOLD2 = 120 #even when the CORRIDOR won't stop it needs time to know how long to measure
-LEVEL2 = 10
+HOLD2 = 60 #even when the CORRIDOR won't stop it needs time to know how long to measure
+LEVEL2 = 0
 FADE3 = 0
 HOLD3 = 0
 LEVEL3 = 0
-INFINITE = False # if TRUE > HOLD2 INDEFINITELY or HOLD3 INDEFINITELY | FALSE if exact by the times stated above
+INFINITE = True # if TRUE > HOLD2 INDEFINITELY or HOLD3 INDEFINITELY | FALSE if exact by the times stated above
 
 TOLERANCE = 0.10 #tolerance porovnani dat 10%
 TOL_LUX = 0.02 #tolerance zmeny hodnoty v namerenych lumenech 2%

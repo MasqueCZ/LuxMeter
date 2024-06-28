@@ -8,7 +8,7 @@ import DS1307, _thread, micropython
 
 program = "21"
 v = "2.62"
-version = f" - FIN:0.7s, RON:120s/100%, FOUT:32s, ABL:15%, SOFF:/"
+version = f" - FIN:0.7s, RON:180s/100%, FOUT:32s, ABL:15%, SOFF:/"
 
 """
 LUX CORRIDOR meter
@@ -22,7 +22,7 @@ HOLD1 = 180
 LEVEL1 = 100
 FADE2 = 32
 HOLD2 = 600 #even when the CORRIDOR won't stop it needs time to know how long to measure
-LEVEL2 = 10
+LEVEL2 = 15
 FADE3 = 0
 HOLD3 = 0
 LEVEL3 = 0
