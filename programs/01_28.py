@@ -7,9 +7,9 @@ from neopixel import Neopixel
 import DS1307, _thread, micropython
 import config
 
-program = "27"
+program = "28"
 v = "2.62"
-version = f" - FIN:0.7s, RON:120s/100%, FOUT:32s, ABL:0%, SOFF:/"
+version = f" - FIN:5s, RON:300s/100%, FOUT:32s, ABL:10%, SOFF:/"
 print(f"box c.: {config.box_version}")
 
 """
@@ -19,12 +19,12 @@ The relay waits until it gets stable reading of OFF luminaire. And then start th
 """
 DEBUG = False #If TRUE, program shows extra data in shell
 
-FADE1 = 0.7
-HOLD1 = 120
+FADE1 = 5
+HOLD1 = 300
 LEVEL1 = 100
 FADE2 = 32
 HOLD2 = 600 #even when the CORRIDOR won't stop it needs time to know how long to measure
-LEVEL2 = 0
+LEVEL2 = 10
 FADE3 = 0
 HOLD3 = 0
 LEVEL3 = 0

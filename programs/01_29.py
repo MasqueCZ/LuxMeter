@@ -7,24 +7,26 @@ from neopixel import Neopixel
 import DS1307, _thread, micropython
 import config
 
-program = "27"
+program = "29"
 v = "2.62"
-version = f" - FIN:0.7s, RON:120s/100%, FOUT:32s, ABL:0%, SOFF:/"
+version = f" - FIN:0.7s, RON:60s/100%, FOUT:2s, ABL:10%, SOFF:1800s"
 print(f"box c.: {config.box_version}")
 
 """
 LUX CORRIDOR meter
 
 The relay waits until it gets stable reading of OFF luminaire. And then start the cycle of measurement and data-write phase.
+
+short FADE2 edited at line 365 in phase2 = "Tim 3 - HOLD"
 """
 DEBUG = False #If TRUE, program shows extra data in shell
 
 FADE1 = 0.7
-HOLD1 = 120
+HOLD1 = 60
 LEVEL1 = 100
-FADE2 = 32
+FADE2 = 2
 HOLD2 = 600 #even when the CORRIDOR won't stop it needs time to know how long to measure
-LEVEL2 = 0
+LEVEL2 = 10
 FADE3 = 0
 HOLD3 = 0
 LEVEL3 = 0
@@ -362,7 +364,7 @@ while True:
 #                OK = True
                 file.write(f"OK - Val2: {str(Val2)} equals {str(LEVEL2)}\n")
             break
-        elif float(FADE2) <= Fad2 + (Fad2 * TOLERANCE) and float(FADE2) >= Fad2 - (Fad2 * TOLERANCE):
+        elif float(FADE2) <= Fad2 + 1 + (Fad2 * TOLERANCE) and float(FADE2) >= Fad2 - 1 - (Fad2 * TOLERANCE):
             file.write("OK")
         else:
             file.write("NOK")
