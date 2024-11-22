@@ -7,9 +7,9 @@ from neopixel import Neopixel
 import DS1307, _thread, micropython
 import config
 
-program = "29"
+program = "31"
 v = config.v
-version = f" - FIN:0.7s, RON:60s/100%, FOUT:2s, ABL:10%, SOFF:1800s"
+version = f" - FIN:5s, RON:600s/100%, FOUT:32s, ABL:10%, SOFF:/"
 print(f"box # {config.box_version}")
 print(f"version {v}")
 rotate_display = config.display_rotation
@@ -23,10 +23,10 @@ short FADE2 edited at line 365 in phase2 = "Tim 3 - HOLD"
 """
 DEBUG = False #If TRUE, program shows extra data in shell
 
-FADE1 = 0.7
-HOLD1 = 60
+FADE1 = 5
+HOLD1 = 600
 LEVEL1 = 100
-FADE2 = 2
+FADE2 = 32
 HOLD2 = 600 #even when the CORRIDOR won't stop it needs time to know how long to measure
 LEVEL2 = 10
 FADE3 = 0

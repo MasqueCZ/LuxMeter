@@ -10,8 +10,12 @@ from utime import sleep
 from BH1750 import BH1750
 from neopixel import Neopixel
 import DS1307, _thread, micropython
+import config
 
 DEBUG = False
+print(f"box # {config.box_version}")
+print(f"version {v}")
+rotate_display = config.display_rotation
 
 # I2C variables
 i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
@@ -25,8 +29,10 @@ shift = 0
 list_length = 0
 total_lines = 6
 
+
+
 # create the display
-oled = SH1106_I2C(width=width, height=height, i2c=i2c, rotate=0)
+oled = SH1106_I2C(width=width, height=height, i2c=i2c, rotate=rotate_display)
 oled.fill(0)
 oled.init_display()
 
