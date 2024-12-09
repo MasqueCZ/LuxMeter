@@ -1,15 +1,16 @@
-'''box version
+box_version = "01 - Mont"
+'''
+box version
 00 - TU
 01 - Mont / rot 0
 02 - Inno / rot 180
 '''
 
-box_version = "01 - Mont"
-
 display_rotation = 0
 
 v = "3.0"
 
+#PREPARATION
 #dictionary
 program29 = \
     {'version' :  "- FIN:0.7s, RON:60s/100%, FOUT:2s, ABL:10%, SOFF:1800s",
