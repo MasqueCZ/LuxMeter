@@ -8,7 +8,7 @@ import DS1307, _thread, micropython
 
 program = "3"
 v = "2.62"
-version = f" - FIN:0.7s, RON:120s/100%, FOUT:32s, ABL:15%, SOFF:/"
+version = f" - FIN:0.7s, RON:120s/100%, FOUT:32s, ABL:10%, SOFF:/"
 
 """
 LUX CORRIDOR meter

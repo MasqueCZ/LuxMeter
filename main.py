@@ -14,7 +14,7 @@ import config
 
 DEBUG = False
 print(f"box # {config.box_version}")
-print(f"version {v}")
+print(f"version {config.v}")
 rotate_display = config.display_rotation
 
 # I2C variables

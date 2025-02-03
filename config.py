@@ -1,12 +1,16 @@
-box_version = "01 - Mont"
+box_version = "01"
 '''
 box version
 00 - TU
-01 - Mont / rot 0
-02 - Inno / rot 180
+01 - Mont / set display rot 0
+02 - Inno / set display rot 180
 '''
-
 display_rotation = 0
+
+if box_version == 01:
+    display_rotation = 0
+elif box_version == 02:
+    display_rotation = 180
 
 v = "3.0"
 

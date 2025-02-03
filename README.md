@@ -38,3 +38,5 @@ even though it already measured for certain time, but the value never changed it
 4 - add magnetic sensor to enter special mode?
 
 5 - menu, while choosing a program, if continuous push of a button scroll faster? Jump by 2, 5 or faster?
+
+6 - add memory check at start so it does not begin if there is not enough space to save file??
