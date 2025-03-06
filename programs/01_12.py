@@ -5,15 +5,20 @@ from utime import sleep
 from BH1750 import BH1750
 from neopixel import Neopixel
 import DS1307, _thread, micropython
+import config
 
 program = "12"
 v = "2.62"
-version = f" - FIN:0.7s, RON:120s/100%, FOUT:32s, ABL:15%, SOFF:/"
-
+version = f" - FIN:0.7s, RON:270s/100%, FOUT:32s, ABL:10%, SOFF:/"
+print(f"box # {config.box_version}")
+print(f"version {v}")
+rotate_display = config.display_rotation
 """
 LUX CORRIDOR meter
 
 The relay waits until it gets stable reading of OFF luminaire. And then start the cycle of measurement and data-write phase.
+
+short FADE2 edited at line 365 in phase2 = "Tim 3 - HOLD"
 """
 DEBUG = False #If TRUE, program shows extra data in shell
 
@@ -26,7 +31,7 @@ LEVEL2 = 10
 FADE3 = 0
 HOLD3 = 0
 LEVEL3 = 0
-INFINITE = False # if TRUE > HOLD2 INDEFINITELY or HOLD3 INDEFINITELY | FALSE if exact by the times stated above
+INFINITE = True # if TRUE > HOLD2 INDEFINITELY or HOLD3 INDEFINITELY | FALSE if exact by the times stated above
 
 TOLERANCE = 0.10 #tolerance porovnani dat 10%
 TOL_LUX = 0.02 #tolerance zmeny hodnoty v namerenych lumenech 2%
@@ -46,7 +51,7 @@ i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
 # display
 width = 128
 height = 64
-oled = SH1106_I2C(width=width, height=height, i2c=i2c, rotate=180) #rotate used to be 180, now testing 0
+oled = SH1106_I2C(width=width, height=height, i2c=i2c, rotate=rotate_display) #rotate used to be 180, now testing 0
 oled.fill(0)
 
 # light meter module
@@ -197,7 +202,7 @@ for i in range (0,6):
         time_list[i] = (f"0{time_list[i]}")
     time_list = tuple(time_list)
 
-test_file_name = (f"/mereni/{time_list[0]}-{time_list[1]}-{time_list[2]}_{time_list[4]}-{time_list[5]}-{time_list[6]}-{program}-{v}.txt")
+test_file_name = (f"/mereni/B{config.box_version}__{time_list[0]}-{time_list[1]}-{time_list[2]}_{time_list[4]}-{time_list[5]}-{time_list[6]}__p{program}v{v}.txt")
 file = open(test_file_name, "w")
 file.write(f"Program {program} started {time_list[4]}:{time_list[5]}:{time_list[6]} {time_list[0]}-{time_list[1]}-{time_list[2]}" + "\n" + f"version: v{v}-{version}" + "\n")
 file.write("\n" + f"Parameters:" + "\n" + f"Fade {FADE1}s, Hold {HOLD1}s at {LEVEL1}%" + "\n")
@@ -205,7 +210,7 @@ file.write(f"fade {FADE2}s, hold {HOLD2}s at {LEVEL2}%" + "\n")
 file.write(f"fade {FADE3}s, hold {HOLD3}s at {LEVEL3}%" + "\n")
 
 if INFINITE == True:
-    file.write(f"Driver shuts down to 0% but measurement runs for: {celkovy_cas_rezerva}" + "\n")
+    file.write(f"Driver never shuts down to 0% but measurement runs for: {celkovy_cas_rezerva}" + "\n")
 elif INFINITE == False:
     file.write(f"Driver shuts down to 0% and measures: {celkovy_cas_rezerva}" + "\n")
 file.write("\n")
@@ -360,7 +365,7 @@ while True:
 #                OK = True
                 file.write(f"OK - Val2: {str(Val2)} equals {str(LEVEL2)}\n")
             break
-        elif float(FADE2) <= Fad2 + (Fad2 * TOLERANCE) and float(FADE2) >= Fad2 - (Fad2 * TOLERANCE):
+        elif float(FADE2) <= Fad2 + 1 + (Fad2 * TOLERANCE) and float(FADE2) >= Fad2 - 1 - (Fad2 * TOLERANCE):
             file.write("OK")
         else:
             file.write("NOK")

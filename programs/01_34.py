@@ -7,9 +7,9 @@ from neopixel import Neopixel
 import DS1307, _thread, micropython
 import config
 
-program = "29"
+program = "34"
 v = config.v
-version = f" - FIN:0.7s, RON:60s/100%, FOUT:2s, ABL:10%, SOFF:1800s"
+version = f" - FIN:0.7s, RON:60s/100%, FOUT:60s, ABL:10%, SOFF:1800s"
 print(f"box # {config.box_version}")
 print(f"version {v}")
 rotate_display = config.display_rotation
@@ -23,16 +23,16 @@ short FADE2 edited at line 365 in phase2 = "Tim 3 - HOLD"
 """
 DEBUG = False #If TRUE, program shows extra data in shell
 
-FADE1 = 0.701_31.py
+FADE1 = 0.7
 HOLD1 = 60
 LEVEL1 = 100
-FADE2 = 2
+FADE2 = 60
 HOLD2 = 600 #even when the CORRIDOR won't stop it needs time to know how long to measure
 LEVEL2 = 10
 FADE3 = 0
 HOLD3 = 0
 LEVEL3 = 0
-INFINITE = True # if TRUE > HOLD2 INDEFINITELY or HOLD3 INDEFINITELY | FALSE if exact by the times stated above
+INFINITE = False # if TRUE > HOLD2 INDEFINITELY or HOLD3 INDEFINITELY | FALSE if exact by the times stated above
 
 TOLERANCE = 0.10 #tolerance porovnani dat 10%
 TOL_LUX = 0.02 #tolerance zmeny hodnoty v namerenych lumenech 2%
@@ -203,7 +203,7 @@ for i in range (0,6):
         time_list[i] = (f"0{time_list[i]}")
     time_list = tuple(time_list)
 
-test_file_name = (f"/mereni/B{config.box_version}__{time_list[0]}-{time_list[1]}-{time_list[2]}_{time_list[4]}-{time_list[5]}-{time_list[6]}__p{program}v{v}.txt")
+test_file_name = (f"/mereni/{time_list[0]}-{time_list[1]}-{time_list[2]}_{time_list[4]}-{time_list[5]}-{time_list[6]}-{program}-{v}.txt")
 file = open(test_file_name, "w")
 file.write(f"Program {program} started {time_list[4]}:{time_list[5]}:{time_list[6]} {time_list[0]}-{time_list[1]}-{time_list[2]}" + "\n" + f"version: v{v}-{version}" + "\n")
 file.write("\n" + f"Parameters:" + "\n" + f"Fade {FADE1}s, Hold {HOLD1}s at {LEVEL1}%" + "\n")
@@ -211,7 +211,7 @@ file.write(f"fade {FADE2}s, hold {HOLD2}s at {LEVEL2}%" + "\n")
 file.write(f"fade {FADE3}s, hold {HOLD3}s at {LEVEL3}%" + "\n")
 
 if INFINITE == True:
-    file.write(f"Driver never shuts down to 0% but measurement runs for: {celkovy_cas_rezerva}" + "\n")
+    file.write(f"Driver shuts down to 0% but measurement runs for: {celkovy_cas_rezerva}" + "\n")
 elif INFINITE == False:
     file.write(f"Driver shuts down to 0% and measures: {celkovy_cas_rezerva}" + "\n")
 file.write("\n")
