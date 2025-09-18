@@ -8,8 +8,11 @@ import DS1307, _thread, micropython
 import config
 
 program = "29"
-v = config.v
+
 version = f" - FIN:0.7s, RON:60s/100%, FOUT:2s, ABL:10%, SOFF:1800s"
+
+
+v = config.v
 print(f"box # {config.box_version}")
 print(f"version {v}")
 rotate_display = config.display_rotation
@@ -23,7 +26,7 @@ short FADE2 edited at line 365 in phase2 = "Tim 3 - HOLD"
 """
 DEBUG = False #If TRUE, program shows extra data in shell
 
-FADE1 = 0.701_31.py
+FADE1 = 0.7
 HOLD1 = 60
 LEVEL1 = 100
 FADE2 = 2

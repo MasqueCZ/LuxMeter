@@ -8,9 +8,14 @@ import DS1307, _thread, micropython
 import config
 
 program = "27"
-v = "2.62"
 version = f" - FIN:0.7s, RON:120s/100%, FOUT:32s, ABL:0%, SOFF:/"
 print(f"box c.: {config.box_version}")
+
+
+v = config.v
+print(f"box # {config.box_version}")
+print(f"version {v}")
+rotate_display = config.display_rotation
 
 """
 LUX CORRIDOR meter
@@ -23,7 +28,7 @@ FADE1 = 0.7
 HOLD1 = 120
 LEVEL1 = 100
 FADE2 = 32
-HOLD2 = 600 #even when the CORRIDOR won't stop it needs time to know how long to measure
+HOLD2 = 60 #even when the CORRIDOR won't stop it needs time to know how long to measure
 LEVEL2 = 0
 FADE3 = 0
 HOLD3 = 0
@@ -48,7 +53,7 @@ i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
 # display
 width = 128
 height = 64
-oled = SH1106_I2C(width=width, height=height, i2c=i2c, rotate=180) #rotate used to be 180, now testing 0
+oled = SH1106_I2C(width=width, height=height, i2c=i2c, rotate=rotate_display) #rotate used to be 180, now testing 0
 oled.fill(0)
 
 # light meter module
@@ -199,7 +204,7 @@ for i in range (0,6):
         time_list[i] = (f"0{time_list[i]}")
     time_list = tuple(time_list)
 
-test_file_name = (f"/mereni/{time_list[0]}-{time_list[1]}-{time_list[2]}_{time_list[4]}-{time_list[5]}-{time_list[6]}-{program}-{v}.txt")
+test_file_name = (f"/mereni/B{config.box_version}__{time_list[0]}-{time_list[1]}-{time_list[2]}_{time_list[4]}-{time_list[5]}-{time_list[6]}__p{program}v{v}.txt")
 file = open(test_file_name, "w")
 file.write(f"Program {program} started {time_list[4]}:{time_list[5]}:{time_list[6]} {time_list[0]}-{time_list[1]}-{time_list[2]}" + "\n" + f"version: v{v}-{version}" + "\n")
 file.write("\n" + f"Parameters:" + "\n" + f"Fade {FADE1}s, Hold {HOLD1}s at {LEVEL1}%" + "\n")
@@ -207,7 +212,7 @@ file.write(f"fade {FADE2}s, hold {HOLD2}s at {LEVEL2}%" + "\n")
 file.write(f"fade {FADE3}s, hold {HOLD3}s at {LEVEL3}%" + "\n")
 
 if INFINITE == True:
-    file.write(f"Driver shuts down to 0% but measurement runs for: {celkovy_cas_rezerva}" + "\n")
+    file.write(f"Driver never shuts down to 0% but measurement runs for: {celkovy_cas_rezerva}" + "\n")
 elif INFINITE == False:
     file.write(f"Driver shuts down to 0% and measures: {celkovy_cas_rezerva}" + "\n")
 file.write("\n")
@@ -360,7 +365,9 @@ while True:
             program_result = "END at Tim3, Val2 = 0"
             if LEVEL2 == 0.0:
 #                OK = True
+                file.write(" - Fade time 2: " + str(Fad2) + "s\n")
                 file.write(f"OK - Val2: {str(Val2)} equals {str(LEVEL2)}\n")
+                file.flush()
             break
         elif float(FADE2) <= Fad2 + (Fad2 * TOLERANCE) and float(FADE2) >= Fad2 - (Fad2 * TOLERANCE):
             file.write("OK")

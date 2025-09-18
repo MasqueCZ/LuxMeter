@@ -7,11 +7,9 @@ from neopixel import Neopixel
 import DS1307, _thread, micropython
 import config
 
-program = "1"
-version = f" - FIN:0.7s, RON:120s/100%, FOUT:32s, ABL:10%, SOFF:/"
-
-
+program = "29"
 v = config.v
+version = f" - FIN:0.7s, RON:60s/100%, FOUT:2s, ABL:10%, SOFF:1800s"
 print(f"box # {config.box_version}")
 print(f"version {v}")
 rotate_display = config.display_rotation
@@ -20,13 +18,27 @@ rotate_display = config.display_rotation
 LUX CORRIDOR meter
 
 The relay waits until it gets stable reading of OFF luminaire. And then start the cycle of measurement and data-write phase.
+
+Komentář pro Grundovi
+tohle je funkční verze, které je nadřazené MENU, které vybere program - teď jeden z 36. 
+Kdyby byl trochu víc prostor tak je v plánu udělat program jen jeden, který si bude vybírat data ze samostatného souboru. 
+Ušetřilo by se tak místo a zlepšílo by se nahrávání programů do zařízení, ale začínalo se na pár programech.
+
+Mohlo by se tu ušetřit pár řádků funkcemi, pro další opakujicí se kroky.
+Další krok je taky, že bych programy kompiloval, pro větší rychlost a stabilitu a úsporu místa, ale zatím nebyl čas.
+
+Další vlna optimalizace čeká na verzi, kdy budou soubory sjednocené a jednotlivé zákaznické nastavení budou v souboru bokem.
+Protože programy se většinou odlišují dalšími 12 řádky pod tímto komentářem. Ale zákazníci občas vymyslí něco na co tohle nebylo připravené.
+
+Každopádně ti jako programátorovi nezávidím čtení jiného zdrojáku a za kombinaci ENG a CZ komentářů i když jsem jich většinu eliminoval.
+Případně k funkci CORRIDOR konzultuj internet a náhled CORRIDOR BOX scheme.png - kde jsou názvy proměnných s kterými se tu pracuje.
 """
 DEBUG = False #If TRUE, program shows extra data in shell
 
 FADE1 = 0.7
-HOLD1 = 120
+HOLD1 = 60
 LEVEL1 = 100
-FADE2 = 32
+FADE2 = 2
 HOLD2 = 600 #even when the CORRIDOR won't stop it needs time to know how long to measure
 LEVEL2 = 10
 FADE3 = 0
@@ -52,7 +64,7 @@ i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
 # display
 width = 128
 height = 64
-oled = SH1106_I2C(width=width, height=height, i2c=i2c, rotate=rotate_display) #rotate used to be 180, now testing 0
+oled = SH1106_I2C(width=width, height=height, i2c=i2c, rotate=rotate_display)
 oled.fill(0)
 
 # light meter module
@@ -84,7 +96,7 @@ LED.value(0)
 pixels.fill((25*pix_val, 10*pix_val, 0)) # ORANGE
 pixels.show()
 
-#enable oscillator
+#enable oscillator - kept here for starting the unit with fresh HW
 #ds.halt(FALSE)
 
 # sets actual time year/month/day/DOW(starts with sunday=0)/hour/minute/second/subseconds
@@ -295,13 +307,13 @@ while True:
             print(f"{lux_value} lux_value")
     stable = all(i for i in lux_value)
 
-# OPERATIVE phase - for better imagining of the process check /blueprints/scheme.jpg
+# OPERATIVE phase - for better grasping the process check /blueprints/scheme.jpg
 
     if Val0 == "x" and stable == True:
         relay.value(0)
         sleep(5)
         relay02.value(0)
-        sleep(3)
+        sleep(2)
         Val0 = lux
         Tim0 = get_seconds() - 0  # play with this number in real situations | 0 sec for this is where all other starts
         stable = False  # this condition and the line above IS enough to catch the OFF ON transition, so it does not evaluate STABLE = TRUE immediately
@@ -313,7 +325,6 @@ while True:
         Val1 = lux
         Tim1 = get_seconds() - 5
         if float(Val1) < 1.0:
-            #button_pressed = True
             program_result = "Val1 nemuze byt nula"
             file.write("Val1 nemuze byt nula" + "\n")
             break
@@ -360,15 +371,11 @@ while True:
         Per1 = round((float(Val2) / float(Val1)) * 100, 1)
 
         if float(Val2) == 0.0:
-            #button_pressed = True #ENDS CYCLE
             program_result = "END at Tim3, Val2 = 0"
             if LEVEL2 == 0.0:
-#                OK = True
-                file.write(" - Fade time 2: " + str(Fad2) + "s\n")
                 file.write(f"OK - Val2: {str(Val2)} equals {str(LEVEL2)}\n")
-                file.flush()
             break
-        elif float(FADE2) <= Fad2 + (Fad2 * TOLERANCE) and float(FADE2) >= Fad2 - (Fad2 * TOLERANCE):
+        elif float(FADE2) <= Fad2 + 1 + (Fad2 * TOLERANCE) and float(FADE2) >= Fad2 - 1 - (Fad2 * TOLERANCE):
             file.write("OK")
         else:
             file.write("NOK")
@@ -456,7 +463,6 @@ while True:
         file.write("- hold time 3: " + str(Hol3) + "s at value: " + str(Val3) + "lx " + "\n")
         file.write("Final lx value: " + str(Val4) + "\n")
         file.flush()
-        #button_pressed = True
         break
 
     #AUTOMATIC END if measuring too long TIME+10%

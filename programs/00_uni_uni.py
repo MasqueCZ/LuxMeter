@@ -49,7 +49,7 @@ i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
 # display
 width = 128
 height = 64
-oled = SH1106_I2C(width=width, height=height, i2c=i2c, rotate=180)
+oled = SH1106_I2C(width=width, height=height, i2c=i2c, rotate=0)
 oled.fill(0)
 
 # light meter module

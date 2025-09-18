@@ -7,11 +7,9 @@ from neopixel import Neopixel
 import DS1307, _thread, micropython
 import config
 
-program = "1"
-version = f" - FIN:0.7s, RON:120s/100%, FOUT:32s, ABL:10%, SOFF:/"
-
-
+program = "40"
 v = config.v
+version = f" - FIN:0.7s, RON:600s/100%, FOUT:32s, ABL:10%, SOFF:600s"
 print(f"box # {config.box_version}")
 print(f"version {v}")
 rotate_display = config.display_rotation
@@ -20,11 +18,13 @@ rotate_display = config.display_rotation
 LUX CORRIDOR meter
 
 The relay waits until it gets stable reading of OFF luminaire. And then start the cycle of measurement and data-write phase.
+
+short FADE2 edited at line 365 in phase2 = "Tim 3 - HOLD"
 """
 DEBUG = False #If TRUE, program shows extra data in shell
 
 FADE1 = 0.7
-HOLD1 = 120
+HOLD1 = 600
 LEVEL1 = 100
 FADE2 = 32
 HOLD2 = 600 #even when the CORRIDOR won't stop it needs time to know how long to measure
@@ -32,7 +32,7 @@ LEVEL2 = 10
 FADE3 = 0
 HOLD3 = 0
 LEVEL3 = 0
-INFINITE = True # if TRUE > HOLD2 INDEFINITELY or HOLD3 INDEFINITELY | FALSE if exact by the times stated above
+INFINITE = False # if TRUE > HOLD2 INDEFINITELY or HOLD3 INDEFINITELY | FALSE if exact by the times stated above
 
 TOLERANCE = 0.10 #tolerance porovnani dat 10%
 TOL_LUX = 0.02 #tolerance zmeny hodnoty v namerenych lumenech 2%
@@ -45,7 +45,6 @@ pix_val = 0.5 # variable for PIXELS value - set between 0.35 - 3
 #program_end = False
 program_result = "nevyhodnocen/program ukončen předčasně"
 OK = True   # PROGRAM final verdict | False = NOK
-
 
 i2c = I2C(0, scl=Pin(17), sda=Pin(16), freq=400000)
 
@@ -203,7 +202,7 @@ for i in range (0,6):
         time_list[i] = (f"0{time_list[i]}")
     time_list = tuple(time_list)
 
-test_file_name = (f"/mereni/B{config.box_version}__{time_list[0]}-{time_list[1]}-{time_list[2]}_{time_list[4]}-{time_list[5]}-{time_list[6]}__p{program}v{v}.txt")
+test_file_name = (f"/mereni/{time_list[0]}-{time_list[1]}-{time_list[2]}_{time_list[4]}-{time_list[5]}-{time_list[6]}-{program}-{v}.txt")
 file = open(test_file_name, "w")
 file.write(f"Program {program} started {time_list[4]}:{time_list[5]}:{time_list[6]} {time_list[0]}-{time_list[1]}-{time_list[2]}" + "\n" + f"version: v{v}-{version}" + "\n")
 file.write("\n" + f"Parameters:" + "\n" + f"Fade {FADE1}s, Hold {HOLD1}s at {LEVEL1}%" + "\n")
@@ -211,7 +210,7 @@ file.write(f"fade {FADE2}s, hold {HOLD2}s at {LEVEL2}%" + "\n")
 file.write(f"fade {FADE3}s, hold {HOLD3}s at {LEVEL3}%" + "\n")
 
 if INFINITE == True:
-    file.write(f"Driver never shuts down to 0% but measurement runs for: {celkovy_cas_rezerva}" + "\n")
+    file.write(f"Driver shuts down to 0% but measurement runs for: {celkovy_cas_rezerva}" + "\n")
 elif INFINITE == False:
     file.write(f"Driver shuts down to 0% and measures: {celkovy_cas_rezerva}" + "\n")
 file.write("\n")
@@ -296,39 +295,22 @@ while True:
     stable = all(i for i in lux_value)
 
 # OPERATIVE phase - for better imagining of the process check /blueprints/scheme.jpg
-
-    if Val0 == "x" and stable == True:
-        relay.value(0)
-        sleep(5)
-        relay02.value(0)
-        sleep(3)
-        Val0 = lux
-        Tim0 = get_seconds() - 0  # play with this number in real situations | 0 sec for this is where all other starts
-        stable = False  # this condition and the line above IS enough to catch the OFF ON transition, so it does not evaluate STABLE = TRUE immediately
-        file.write("Measurement:" + "\n")
-        file.write("Stable at: " + str(Val0) + "lx\n")
-        relay02.value(1)
-
-    if Val1 == "x" and stable == True:
+    if Val1 == "x" and Val0 != "x" and stable == False:
         Val1 = lux
-        Tim1 = get_seconds() - 5
+        Tim1 = get_seconds() - 0
+        Tim2 = get_seconds() - 0
+        Hol1 = Tim2 - Tim1
         if float(Val1) < 1.0:
             #button_pressed = True
             program_result = "Val1 nemuze byt nula"
             file.write("Val1 nemuze byt nula" + "\n")
+            file.flush()
             break
 
-        phase = "Operative:"
-        phase2 = "Tim 1 - HOLD"
-
-# Standby 1
-    if Tim1 != "x" and Tim2 == "x" and stable_boolean == False:
-        Tim2 = get_seconds()
         phase = "StandBy 1:"
         phase2 = "Tim 2 - FADE"
-        Hol1 = Tim2 - Tim1
-        Fad1 = Tim1 - Tim0
 
+        Fad1 = Tim1 - Tim0
         if Fad1 <= 1 and FADE1 <= 1:
             file.write("OK")
         elif Fad1 <= (10 * FADE1):
@@ -342,40 +324,42 @@ while True:
 
         file.write(" - Fade time 1: " + str(Fad1) + "s\n")
 
-        if float(HOLD1) <= Hol1 + (Hol1 * TOLERANCE) and float(HOLD1) >= Hol1 - (Hol1 * TOLERANCE):
-            file.write("OK")
-        else:
-            file.write("NOK")
-            OK = False
+        #if float(HOLD1) <= Hol1 + (Hol1 * TOLERANCE) and float(HOLD1) >= Hol1 - (Hol1 * TOLERANCE):
+        #    file.write("OK")
+        #else:
+        #    file.write("NOK")
+        #    OK = False
 
         file.write(" - Hold time 1: " + str(Hol1) + "s at value: " + str(Val1) + "lx (100%)\n")
+
         file.flush()
+
+    if Val0 == "x" and stable == True:
+        relay.value(0)
+        sleep(5)
+        relay02.value(0)
+        sleep(2)
+        Val0 = lux
+        Tim0 = get_seconds() - 0  # play with this number in real situations | 0 sec for this is where all other starts
+        stable = False  # this condition and the line above IS enough to catch the OFF ON transition, so it does not evaluate STABLE = TRUE immediately
+        file.write("Measurement:" + "\n")
+        file.write("Stable at: " + str(Val0) + "lx\n")
+        relay02.value(1)
+
 
     if Tim1 != "x" and Tim2 != "x" and Tim3 == "x" and stable == True:
         Val2 = lux
-        Tim3 = get_seconds()
-        Tim3 -= 5
+        Tim3 = get_seconds() - 5
         phase2 = "Tim 3 - HOLD"
         Fad2 = Tim3 - Tim2
+        print(Val1)
+        print(Val2)
         Per1 = round((float(Val2) / float(Val1)) * 100, 1)
+        #if LEVEL2 == 0 and Val2 <= 0:
+        #    Per1 = 0
+        #else:
+        #    Per1 = round((float(Val2) / float(Val1)) * 100, 1)
 
-        if float(Val2) == 0.0:
-            #button_pressed = True #ENDS CYCLE
-            program_result = "END at Tim3, Val2 = 0"
-            if LEVEL2 == 0.0:
-#                OK = True
-                file.write(" - Fade time 2: " + str(Fad2) + "s\n")
-                file.write(f"OK - Val2: {str(Val2)} equals {str(LEVEL2)}\n")
-                file.flush()
-            break
-        elif float(FADE2) <= Fad2 + (Fad2 * TOLERANCE) and float(FADE2) >= Fad2 - (Fad2 * TOLERANCE):
-            file.write("OK")
-        else:
-            file.write("NOK")
-            OK = False
-            break
-
-        file.write(" - Fade time 2: " + str(Fad2) + "s\n")
 
         if float(LEVEL2) <= Per1 + (Per1 * (1 * TOLERANCE)) and float(LEVEL2) >= Per1 - (Per1 * (2 * TOLERANCE)):
             file.write("OK")
@@ -386,7 +370,26 @@ while True:
             OK = False
 
         file.write(" - level 2: " + str(Per1) + "%" + "\n")
-        file.flush()
+
+        if float(FADE2) <= Fad2 + 1 + (Fad2 * TOLERANCE) and float(FADE2) >= Fad2 - 1 - (Fad2 * TOLERANCE):
+            file.write("OK")
+            file.write(" - Fade time 2: " + str(Fad2) + "s\n")
+            file.flush()
+        else:
+            file.write("NOK")
+            file.write(" - Fade time 2: " + str(Fad2) + "s\n")
+            file.flush()
+            OK = False
+            break
+
+        if float(Val2) == 0.0:
+            # button_pressed = True #ENDS CYCLE
+            program_result = "END at Tim3, Val2 = 0"
+            if LEVEL2 == 0.0:
+            #                OK = True
+                file.write(f"OK - Val2: {str(Val2)} equals {str(LEVEL2)}\n")
+                file.flush()
+
 
 # Standby 2
     if Tim3 != "x" and Tim4 == "x" and stable_boolean == False:

@@ -19,10 +19,10 @@ DEBUG = False #If TRUE, program shows extra data in shell
 
 FADE1 = 0.7
 HOLD1 = 300
-LEVEL1 = 100
+LEVEL1 = 100 # 80%
 FADE2 = 32
 HOLD2 = 600 #even when the CORRIDOR won't stop it needs time to know how long to measure
-LEVEL2 = 16
+LEVEL2 = 25 # 20%
 FADE3 = 0
 HOLD3 = 0
 LEVEL3 = 0

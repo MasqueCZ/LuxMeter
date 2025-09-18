@@ -31,7 +31,7 @@ LEVEL2 = 10
 FADE3 = 0
 HOLD3 = 0
 LEVEL3 = 0
-INFINITE = True # if TRUE > HOLD2 INDEFINITELY or HOLD3 INDEFINITELY | FALSE if exact by the times stated above
+INFINITE = False # if TRUE > HOLD2 INDEFINITELY or HOLD3 INDEFINITELY | FALSE if exact by the times stated above
 
 TOLERANCE = 0.10 #tolerance porovnani dat 10%
 TOL_LUX = 0.02 #tolerance zmeny hodnoty v namerenych lumenech 2%
