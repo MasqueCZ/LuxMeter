@@ -14,6 +14,8 @@ elif box_version == 02:
 
 v = "3.0"
 
+#give list from 1 to X, X= max number of programs and then use the list for selection in the menu
+
 #PREPARATION
 #dictionary
 program29 = \

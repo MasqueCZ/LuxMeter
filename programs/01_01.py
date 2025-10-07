@@ -7,14 +7,14 @@ from neopixel import Neopixel
 import DS1307, _thread, micropython
 import config
 
+v = config.v
+print(f"version {v}")
+rotate_display = config.display_rotation
+
 program = "1"
 version = f" - FIN:0.7s, RON:120s/100%, FOUT:32s, ABL:10%, SOFF:/"
 
-
-v = config.v
 print(f"box # {config.box_version}")
-print(f"version {v}")
-rotate_display = config.display_rotation
 
 """
 LUX CORRIDOR meter
